@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aai Gavdevi Asalpada</title>
+<style>
+*{box-sizing:border-box}
+body {
+  margin: 0;
+  background: #101114;
+  color: #f5f5f5;
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  overflow-wrap: break-word;
+}
+
+header {
+  background: linear-gradient(135deg, #20232c, #17191f, #351216);
+  padding: 25px 14px;
+  text-align: center;
+  border-bottom: 3px solid #e63946;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+header > div {
+  filter: drop-shadow(0 0 8px rgba(255, 209, 102, 0.25));
+}
+
+@media screen and (max-width: 600px) {
+  header {
+    padding: 20px 12px;
+  }
+}
+
+header h1{color:#ffd166;font-size:25px;margin:8px 0}
+header p{color:#ddd}
+
+nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: #22252c;
+  padding: 6px;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  padding: 12px 14px;
+  font-size: 14px;
+  border-radius: 7px;
+  text-align: center;
+}
+
+nav a:hover {
+  background: #e63946;
+}
+
+@media screen and (max-width: 600px) {
+  nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 8px;
+  }
+
+  nav a {
+    padding: 12px 4px;
+    font-size: 13px;
+  }
+}
+
+nav a{color:white;text-decoration:none;padding:13px;font-size:14px}
+
+.hero {
+  text-align: center;
+  padding: 55px 18px;
+  background:
+    radial-gradient(ellipse at top, #542027 0%, transparent 65%),
+    linear-gradient(135deg, #351216, #111827);
+  border-bottom: 2px solid #e63946;
+}
+
+.hero h2 {
+  font-size: 30px;
+  line-height: 1.4;
+  color: #ffd166;
+  margin-bottom: 18px;
+}
+
+.hero p {
+  line-height: 1.8;
+  color: #eeeeee;
+  max-width: 600px;
+  margin: 12px auto;
+}
+
+@media screen and (max-width: 600px) {
+  .hero {
+    padding: 35px 14px;
+  }
+
+  .hero h2 {
+    font-size: 24px;
+  }
+
+  .hero p {
+    font-size: 15px;
+  }
+}
+
+.hero h2{font-size:30px;color:#ffd166}
+.hero p{line-height:1.7}
+  .btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff4b55, #c81d35);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  margin-top: 10px;
+  font-weight: bold;
+  border: 1px solid #ff6872;
+  box-shadow: 0 4px 10px rgba(230, 57, 70, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(230, 57, 70, 0.4);
+}
+main{max-width:900px;margin:auto;padding:18px}
+section {
+  background: linear-gradient(145deg, #20232b, #181a20);
+  padding: 22px;
+  margin: 20px 0;
+  border-radius: 14px;
+  border: 1px solid #3b3e49;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.18);
+}
+h2 {
+  color: #ffd166;
+  font-size: 24px;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e63946;
+}
+.card {
+  background: linear-gradient(145deg, #2d303a, #22252c);
+  padding: 18px;
+  margin-top: 12px;
+  border-radius: 12px;
+  border: 1px solid #3b3e49;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  overflow-wrap: anywhere;
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gallery-grid .card {
+  min-width: 0;
+  margin-top: 0;
+}
+
+.gallery-grid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.gallery-grid h3 {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+@media screen and (max-width: 400px) {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+  
+footer {
+  text-align: center;
+  background: linear-gradient(135deg, #20232c, #17191f, #351216);
+  padding: 28px 16px;
+  color: #ddd;
+  border-top: 2px solid #e63946;
+  line-height: 1.8;
+  font-size: 14px;
+}
+.small{color:#bbb;font-size:14px}
+
+/* Mobile Responsive Design */
+@media screen and (max-width: 600px) {
+  header {
+    padding: 18px 12px;
+  }
+
+  header h1 {
+    font-size: 24px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  header p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  main {
+    width: 100%;
+    padding: 10px;
+  }
+
+  section {
+    padding: 14px;
+    margin: 12px 0;
+    border-radius: 10px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  .card {
+    padding: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .btn,
+  button {
+    max-width: 100%;
+    min-height: 44px;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  footer {
+    padding: 18px 12px;
+    font-size: 14px;
+  }
+  input,
+  select,
+  textarea,
+  button {
+    width: 100%;
+    margin-bottom: 10px;
+  }}
+
+</style>
+</head>
+<body>
+
+<header>
+<div style="font-size:40px">🏏</div>
+<h1>AAI GAVDEVI ASALPADA</h1>
+<p>• आपली टीम, आपला अभिमान!</p>
+</header>
+
+<nav>
+<a href="#home">Home</a>
+<a href="#team">Team</a>
+<a href="#schedule">Schedule</a>
+<a href="#score">Scoreboard</a>
+<a href="#gallery">Gallery</a>
+<a href="#updates">Updates</a>
+</nav>
+
+
+<div class="hero" id="home">
+<h2>❤️ एक गाव • एक टीम ❤️ ❤️ एक अभिमान ❤️</h2>
+<p>Welcome to the official website of<br>
+<strong>Aai Gavdevi Cricket Team Asalpada</strong></p>
+<p>आपल्या संघाच्या बातम्या, सामने आणि निकालांसाठी एकच ठिकाण!</p>
+<a class="btn" href="#schedule">Upcoming Matches</a>
+</div>
+
+<main>
+  <section id="score">
+  <h2>🏏 Scoreboard</h2>
+  <div id="scoreboardContainer">
+    <div class="card">
+      स्कोअर लोड होत आहे...
+    </div>
+  </div>
+</section>
+
+  <section id="team">
+<h2>👥 आपली टीम | Our Team</h2>
+<div class="card">
+<strong>Aai Gavdevi Cricket Team Asalpada</strong>
+<p>आपल्या गावाचे प्रतिनिधित्व करणारा टेनिस क्रिकेट संघ.</p>
+<p class="small">खेळाडूंची नावे आणि फोटो लवकरच येथे जोडले जातील.</p>
+</div>
+</section>
+
+  <section id="schedule">
+<h2>📅 Match Schedule</h2>
+  
+<div id="matchesContainer">
+  <p>🏏 मॅच लोड होत आहेत...</p>
+</div>
+  
+<div class="card">
+<strong>Upcoming Matches | आगामी सामने</strong>
+<p>सामन्याचे वेळापत्रक लवकरच जाहीर केले जाईल.</p>
+</div>
+</section>
+  
+  <section id="updates">
+  <h2>📢 Latest Updates</h2>
+  <div id="updatesContainer">
+    <div class="card">
+      संघाच्या नवीन बातम्या आणि घोषणांसाठी येथे भेट द्या.
+    </div>
+  </div>
+</section>
+  
+
+<section id="gallery">
+  <h2>📸 Photo Gallery</h2>
+  <div id="galleryContainer" class="gallery-grid">
+    <p>फोटो लोड होत आहेत...</p>
+  </div>
+</section>
+
+<div style="text-align:center;padding:15px">
+  <button id="adminLoginBtn" class="btn" onclick="document.getElementById('adminLoginBox').hidden=false">
+    Admin Login
+  </button>
+
+  <div id="adminLoginBox" hidden style="margin:15px auto;padding:20px;max-width:350px;background:#1b1d23;border-radius:12px">
+    <h2>Admin Login</h2>
+    <input id="adminEmail" type="email" placeholder="Admin Email" style="padding:10px;width:90%;margin:6px">
+    <input id="adminPassword" type="password" placeholder="Password" style="padding:10px;width:90%;margin:6px">
+    <button class="btn" onclick="adminSignIn()">Login</button>
+    <p id="loginMessage"></p>
+  </div>
+</div>
+
+  
+</main>
+
+<footer>
+<p>🏆 Aai Gavdevi Cricket Team Asalpada 🏆</p>
+<p>❤️ आपल्या गावाचा अभिमान ❤️</p>
+<p>❤️ धन्यवाद ❤️</p>
+<p class="small">Official Team Website</p>
+</footer>
+
+<section id="adminDashboard" hidden style="max-width:900px;margin:25px auto;padding:20px;background:#1b1d23;color:white;border-radius:14px">
+  <h2>🏏 Admin Dashboard</h2>
+  <p>Aai Gavdevi Cricket Team Asalpada</p>
+
+  <hr>
+  <h3>📢 Team Updates</h3>
+  <input id="updateTitle" placeholder="Update title" style="padding:10px;width:90%;margin:5px">
+  <textarea id="updateContent" placeholder="Write your update" style="padding:10px;width:90%;margin:5px"></textarea>
+  <button class="btn" onclick="saveUpdate()">Publish Update</button>
+  <p id="updateMessage"></p>
+
+  <hr>
+  <h3>🏏 Match Schedule</h3>
+  <input id="opponent" placeholder="Opponent team" style="padding:10px;width:90%;margin:5px">
+  <input id="matchDate" type="datetime-local" style="padding:10px;margin:5px">
+  <input id="venue" placeholder="Match venue" style="padding:10px;width:90%;margin:5px">
+  <button class="btn" onclick="saveMatch()">Add Match</button>
+  <p id="matchMessage"></p>
+
+  
+<hr>
+<h3>📊 Scoreboard</h3>
+<p>पहिल्यांदा Match Schedule मध्ये मॅच जोडा. त्यानंतर दोन्ही टीमचे स्कोअर अपडेट करा.</p>
+
+<input id="scoreMatchId" type="number" placeholder="Match ID" style="padding:10px;width:90%;margin:5px">
+
+<h4>🏏 Aai Gavdevi Team</h4>
+<input id="teamRuns" type="number" min="0" placeholder="Runs" style="padding:10px;width:90%;margin:5px">
+<input id="wickets" type="number" min="0" max="10" placeholder="Wickets (0–10)" style="padding:10px;width:90%;margin:5px">
+<input id="overs" type="number" min="0" step="0.1" placeholder="Overs (e.g. 12.3)" style="padding:10px;width:90%;margin:5px">
+
+<h4>🏏 Opponent Team</h4>
+<input id="opponentRuns" type="number" min="0" placeholder="Opponent Runs" style="padding:10px;width:90%;margin:5px">
+<input id="opponentWickets" type="number" min="0" max="10" placeholder="Opponent Wickets (0–10)" style="padding:10px;width:90%;margin:5px">
+<input id="opponentOvers" type="number" min="0" step="0.1" placeholder="Opponent Overs (e.g. 12.3)" style="padding:10px;width:90%;margin:5px">
+
+<input id="target" type="number" min="0" placeholder="Target (optional)" style="padding:10px;width:90%;margin:5px">
+
+<label for="matchStatus">Match Status:</label>
+<select id="matchStatus" style="padding:10px;width:90%;margin:5px">
+  <option value="Upcoming">Upcoming</option>
+  <option value="LIVE">🔴 LIVE</option>
+  <option value="Completed">Completed</option>
+</select>
+
+<button class="btn" onclick="saveScore()">Save Score</button>
+<p id="scoreMessage"></p>
+
+<hr>
+<h3>⚡ Quick Score Update</h3>
+<p>चालू मॅचचा Match ID टाका आणि स्कोअर पटकन अपडेट करा.</p>
+
+<input id="quickMatchId" type="number" min="1"
+  placeholder="Match ID"
+  style="padding:10px;width:90%;margin:5px">
+
+<h4>🏏 Aai Gavdevi Team</h4>
+<input id="quickRuns" type="number" min="0"
+  placeholder="Total Runs"
+  style="padding:10px;width:90%;margin:5px">
+
+<input id="quickWickets" type="number" min="0" max="10"
+  placeholder="Wickets (0–10)"
+  style="padding:10px;width:90%;margin:5px">
+
+<input id="quickOvers" type="number" min="0" step="0.1"
+  placeholder="Overs (e.g. 12.3)"
+  style="padding:10px;width:90%;margin:5px">
+
+<h4>🏏 Opponent Team</h4>
+<input id="quickOpponentRuns" type="number" min="0"
+  placeholder="Opponent Runs"
+  style="padding:10px;width:90%;margin:5px">
+
+<input id="quickOpponentWickets" type="number" min="0" max="10"
+  placeholder="Opponent Wickets (0–10)"
+  style="padding:10px;width:90%;margin:5px">
+
+<input id="quickOpponentOvers" type="number" min="0" step="0.1"
+  placeholder="Opponent Overs (e.g. 12.3)"
+  style="padding:10px;width:90%;margin:5px">
+
+<button class="btn" onclick="quickUpdateScore()">
+  ⚡ Update Score
+</button>
+<p id="quickScoreMessage"></p>
+
+
+<hr>
+<h3>📸 Photo Gallery</h3>
+<input id="galleryTitle" placeholder="Photo title" style="padding:10px;width:90%;margin:5px">
+<input id="galleryUrl" type="url" placeholder="Photo image URL" style="padding:10px;width:90%;margin:5px">
+<button class="btn" onclick="saveGallery()">Add Photo</button>
+<p id="galleryMessage"></p>
+
+  <button class="btn" onclick="adminLogout()">Logout</button>
+</section>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://piumekdcicmhurcosqnh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_MPOfSlTZQyXcXlzdVPA4ow_NWK8ht4S";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+async function adminSignIn() {
+  const email = document.getElementById("adminEmail").value.trim();
+  const password = document.getElementById("adminPassword").value;
+  const message = document.getElementById("loginMessage");
+
+  message.textContent = "Logging in...";
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    message.textContent = "Login failed: " + error.message;
+    return;
+  }
+
+  const { data: admin, error: adminError } =
+    await supabaseClient.rpc("is_admin");
+
+  if (adminError || admin !== true) {
+    await supabaseClient.auth.signOut();
+    message.textContent = "This account is not an authorized admin.";
+    return;
+  }
+
+  message.textContent = "Admin login successful!";
+  const dashboard = document.getElementById("adminDashboard");
+dashboard.hidden = false;
+dashboard.style.display = "block";
+dashboard.scrollIntoView({ behavior: "smooth" });
+}
+  
+async function saveGallery() {
+  const title = document.getElementById("galleryTitle").value.trim();
+  const imageUrl = document.getElementById("galleryUrl").value.trim();
+  const message = document.getElementById("galleryMessage");
+
+  if (!title || !imageUrl) {
+    message.textContent = "Photo title आणि image URL भरा.";
+    return;
+  }
+
+  try {
+    const url = new URL(imageUrl);
+
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      message.textContent = "कृपया योग्य image URL द्या.";
+      return;
+    }
+
+    const { error } = await supabaseClient
+      .from("gallery")
+      .insert({
+        title: title,
+        image_url: url.href
+      });
+
+    if (error) {
+      message.textContent = "Error: " + error.message;
+      return;
+    }
+
+    message.textContent = "Photo माहिती सेव्ह झाली!";
+    document.getElementById("galleryTitle").value = "";
+    document.getElementById("galleryUrl").value = "";
+  } catch (error) {
+    message.textContent = "कृपया योग्य image URL द्या.";
+  }
+}
+
+async function loadGallery() {
+  const container = document.getElementById("galleryContainer");
+  if (!container) return;
+
+  container.textContent = "फोटो लोड होत आहेत...";
+
+  const { data, error } = await supabaseClient
+    .from("gallery")
+    .select("title, image_url");
+
+  if (error) {
+    container.textContent = "Gallery लोड झाली नाही: " + error.message;
+    console.error("Gallery error:", error);
+    return;
+  }
+
+  container.replaceChildren();
+
+  if (!data || data.length === 0) {
+    container.textContent = "अजून फोटो जोडलेले नाहीत.";
+    return;
+  }
+
+  data.forEach((photo) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const img = document.createElement("img");
+    img.src = photo.image_url;
+    img.alt = photo.title || "Team photo";
+    img.loading = "lazy";
+    img.style.width = "100%";
+    img.style.borderRadius = "10px";
+
+    const title = document.createElement("h3");
+    title.textContent = photo.title || "Team Photo";
+
+    card.append(img, title);
+    container.appendChild(card);
+  });
+}
+
+loadGallery();
+
+async function saveUpdate() {
+  const title = document.getElementById("updateTitle").value.trim();
+  const content = document.getElementById("updateContent").value.trim();
+  const message = document.getElementById("updateMessage");
+
+  if (!title || !content) {
+    message.textContent = "कृपया Update title आणि मजकूर भरा.";
+    return;
+  }
+
+  message.textContent = "Update सेव्ह होत आहे...";
+
+  const { error } = await supabaseClient
+    .from("team_updates")
+    .insert({
+      title: title,
+      content: content
+    });
+
+  if (error) {
+    message.textContent = "Error: " + error.message;
+    console.error(error);
+    return;
+  }
+
+  message.textContent = "Update यशस्वीपणे सेव्ह झाली!";
+  document.getElementById("updateTitle").value = "";
+  document.getElementById("updateContent").value = "";
+}
+
+async function loadUpdates() {
+  const container = document.getElementById("updatesContainer");
+
+  const { data, error } = await supabaseClient
+    .from("team_updates")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Updates error:", error.message);
+    container.innerHTML = "<p>Updates लोड होत नाहीत.</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `
+      <div class="card">
+        अजून नवीन Updates नाहीत.
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = data.map(update => `
+    <div class="card">
+      <h3>${update.title}</h3>
+      <p>${update.content}</p>
+    </div>
+  `).join("");
+}
+loadUpdates();
+  
+async function saveMatch() {
+  const opponent = document.getElementById("opponent").value.trim();
+  const matchDate = document.getElementById("matchDate").value;
+  const venue = document.getElementById("venue").value.trim();
+  const message = document.getElementById("matchMessage");
+
+  if (!opponent || !matchDate || !venue) {
+    message.textContent = "कृपया Opponent, Date आणि Venue भरा.";
+    return;
+  }
+
+  message.textContent = "Match सेव्ह होत आहे...";
+
+  const { error } = await supabaseClient
+    .from("matches")
+    .insert([{
+      opponent: opponent,
+      match_date: new Date(matchDate).toISOString(),
+      venue: venue
+    }]);
+
+  if (error) {
+    console.error(error);
+    message.textContent = "Error: " + error.message;
+    return;
+  }
+
+  message.textContent = "Match यशस्वीपणे सेव्ह झाली!";
+
+  document.getElementById("opponent").value = "";
+  document.getElementById("matchDate").value = "";
+  document.getElementById("venue").value = "";
+
+  if (typeof loadMatches === "function") {
+    await loadMatches();
+  }
+}
+
+
+async function loadMatches() {
+  const container = document.getElementById("matchesContainer");
+
+  if (!container) {
+    console.error("matchesContainer सापडला नाही");
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("matches")
+    .select("*")
+    .order("match_date", { ascending: true });
+
+  if (error) {
+    console.error("Matches error:", error.message);
+    container.innerHTML = "<p>मॅच लोड होत नाहीत.</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `
+      <div class="card">सध्या कोणत्याही मॅचचे वेळापत्रक उपलब्ध नाही.</div>
+    `;
+    return;
+  }
+
+  container.innerHTML = data.map(match => `
+    <div class="card">
+      <h3>🏏 Aai Gavdevi Asalpada vs ${match.opponent}</h3>
+      <p>📅 ${new Date(match.match_date).toLocaleString("en-IN")}</p>
+      <p>📍 ${match.venue}</p>
+      <p>${match.status || "Upcoming"}</p>
+    </div>
+  `).join("");
+}
+
+loadMatches();
+
+
+
+
+async function saveScore() {
+  const matchId = document.getElementById("scoreMatchId").value.trim();
+
+  const runs = document.getElementById("teamRuns").value;
+  const wickets = document.getElementById("wickets").value;
+  const overs = document.getElementById("overs").value;
+
+  const opponentRuns = document.getElementById("opponentRuns").value;
+  const opponentWickets = document.getElementById("opponentWickets").value;
+  const opponentOvers = document.getElementById("opponentOvers").value;
+
+  const target = document.getElementById("target").value;
+  const status = document.getElementById("matchStatus").value;
+  const message = document.getElementById("scoreMessage");
+
+  if (
+    !matchId ||
+    runs === "" ||
+    wickets === "" ||
+    overs === "" ||
+    opponentRuns === "" ||
+    opponentWickets === "" ||
+    opponentOvers === ""
+  ) {
+    message.textContent = "कृपया Match ID आणि दोन्ही टीमचे सर्व स्कोअर भरा.";
+    return;
+  }
+
+  message.textContent = "दोन्ही टीमचे स्कोअर सेव्ह होत आहेत...";
+
+  const { data: existing, error: findError } = await supabaseClient
+    .from("scoreboards")
+    .select("id")
+    .eq("match_id", Number(matchId))
+    .maybeSingle();
+
+  if (findError) {
+    message.textContent = "Error: " + findError.message;
+    return;
+  }
+
+  const scoreData = {
+    match_id: Number(matchId),
+    team_runs: Number(runs),
+    wickets: Number(wickets),
+    overs: Number(overs),
+    opponent_runs: Number(opponentRuns),
+    opponent_wickets: Number(opponentWickets),
+    opponent_overs: Number(opponentOvers),
+    target: target === "" ? null : Number(target),
+    status: status,
+    updated_at: new Date().toISOString()
+  };
+
+  let result;
+
+  if (existing) {
+    result = await supabaseClient
+      .from("scoreboards")
+      .update(scoreData)
+      .eq("id", existing.id);
+  } else {
+    result = await supabaseClient
+      .from("scoreboards")
+      .insert([scoreData]);
+  }
+
+  if (result.error) {
+    message.textContent = "Error: " + result.error.message;
+    console.error(result.error);
+    return;
+  }
+
+  message.textContent = "दोन्ही टीमचे स्कोअर यशस्वीपणे सेव्ह झाले!";
+
+  if (typeof loadScoreboard === "function") {
+    await loadScoreboard();
+    
+setInterval(() => {
+  loadScoreboard();
+}, 10000);
+
+  }
+}
+
+
+
+async function loadScoreboard() {
+  const container = document.getElementById("scoreboardContainer");
+
+  if (!container) {
+    console.error("scoreboardContainer सापडला नाही");
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("scoreboards")
+    .select(`
+      status,
+      match_id,
+      team_runs,
+      wickets,
+      overs,
+      opponent_runs,
+      opponent_wickets,
+      opponent_overs,
+      target,
+      matches(opponent, match_date, venue)
+    `)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("Scoreboard error:", error.message);
+    container.innerHTML = "<p>Scoreboard लोड होत नाही.</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML =
+      '<div class="card">सध्या स्कोअर उपलब्ध नाही.</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(score => {
+    const match = score.matches;
+    const opponent = match?.opponent || "Opponent Team";
+
+    const date = match?.match_date
+      ? new Date(match.match_date).toLocaleDateString("en-IN")
+      : "";
+
+    return `
+      <div class="card">
+        <h3>🏏 Aai Gavdevi Asalpada vs ${opponent}</h3>
+        <p>
+  ${
+    score.status === "LIVE"
+      ? "🔴 LIVE"
+      : score.status === "Completed"
+      ? "✅ COMPLETED"
+      : "🕒 UPCOMING"
+  }
+</p>
+        <p>📅 ${date}</p>
+        <p>📍 ${match?.venue || ""}</p>
+
+        <hr>
+
+        <h4>🏏 Aai Gavdevi Team</h4>
+        <h2>${score.team_runs}/${score.wickets}</h2>
+        <p>Overs: ${score.overs}</p>
+
+        <hr>
+
+        <h4>🏏 ${opponent}</h4>
+        <h2>${score.opponent_runs ?? 0}/${score.opponent_wickets ?? 0}</h2>
+        <p>Overs: ${score.opponent_overs ?? 0}</p>
+
+        ${score.target != null
+          ? `<p>🎯 Target: ${score.target}</p>`
+          : ""}
+      </div>
+    `;
+  }).join("");
+}
+  
+async function quickUpdateScore() {
+  const matchId = document.getElementById("quickMatchId").value.trim();
+  const runs = document.getElementById("quickRuns").value;
+  const wickets = document.getElementById("quickWickets").value;
+  const overs = document.getElementById("quickOvers").value;
+
+  const opponentRuns = document.getElementById("quickOpponentRuns").value;
+  const opponentWickets = document.getElementById("quickOpponentWickets").value;
+  const opponentOvers = document.getElementById("quickOpponentOvers").value;
+
+  const message = document.getElementById("quickScoreMessage");
+
+  if (
+    !matchId ||
+    runs === "" ||
+    wickets === "" ||
+    overs === "" ||
+    opponentRuns === "" ||
+    opponentWickets === "" ||
+    opponentOvers === ""
+  ) {
+    message.textContent = "कृपया Match ID आणि दोन्ही टीमचे सर्व स्कोअर भरा.";
+    return;
+  }
+
+  message.textContent = "स्कोअर अपडेट होत आहे...";
+
+  const { data: existing, error: findError } = await supabaseClient
+    .from("scoreboards")
+    .select("id")
+    .eq("match_id", Number(matchId))
+    .maybeSingle();
+
+  if (findError) {
+    message.textContent = "Error: " + findError.message;
+    return;
+  }
+
+  if (!existing) {
+    message.textContent = "या Match ID साठी Scoreboard नाही. आधी मुख्य Scoreboard फॉर्ममधून स्कोअर सेव्ह करा.";
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("scoreboards")
+    .update({
+      team_runs: Number(runs),
+      wickets: Number(wickets),
+      overs: Number(overs),
+      opponent_runs: Number(opponentRuns),
+      opponent_wickets: Number(opponentWickets),
+      opponent_overs: Number(opponentOvers),
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", existing.id);
+
+  if (error) {
+    message.textContent = "Error: " + error.message;
+    console.error(error);
+    return;
+  }
+
+  message.textContent = "✅ दोन्ही टीमचे स्कोअर अपडेट झाले!";
+
+  await loadScoreboard();
+}
+
+
+loadScoreboard();
+
+</script>
+  
+</body>
+</html>
