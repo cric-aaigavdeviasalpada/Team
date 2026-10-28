@@ -689,6 +689,28 @@ container.innerHTML = data.map(update => `
 }
 loadUpdates();
   
+async function deleteUpdate(id) {
+  const confirmDelete = confirm(
+    "हा Update कायमचा Delete करायचा आहे का?"
+  );
+
+  if (!confirmDelete) return;
+
+  const { error } = await supabaseClient
+    .from("team_updates")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Delete करता आला नाही: " + error.message);
+    return;
+  }
+
+  alert("Update यशस्वीरीत्या Delete झाला!");
+  await loadUpdates();
+}
+
+  
 async function saveMatch() {
   const opponent = document.getElementById("opponent").value.trim();
   const matchDate = document.getElementById("matchDate").value;
