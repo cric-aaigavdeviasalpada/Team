@@ -511,41 +511,71 @@ dashboard.style.display = "block";
 dashboard.scrollIntoView({ behavior: "smooth" });
 }
   
+
 async function saveGallery() {
   const title = document.getElementById("galleryTitle").value.trim();
-  const imageUrl = document.getElementById("galleryUrl").value.trim();
+  const fileInput = document.getElementById("galleryFile");
+  const file = fileInput.files[0];
   const message = document.getElementById("galleryMessage");
 
-  if (!title || !imageUrl) {
-    message.textContent = "Photo title आणि image URL भरा.";
+  if (!title || !file) {
+    message.textContent = "फोटोचे नाव भरा आणि कॉम्प्युटरमधून फोटो निवडा.";
     return;
   }
 
-  try {
-    const url = new URL(imageUrl);
+  if (!file.type.startsWith("image/")) {
+    message.textContent = "कृपया image फाइल निवडा.";
+    return;
+  }
 
-    if (url.protocol !== "https:" && url.protocol !== "http:") {
-      message.textContent = "कृपया योग्य image URL द्या.";
+  if (file.size > 10 * 1024 * 1024) {
+    message.textContent = "फोटोचा आकार 10 MB पेक्षा कमी असावा.";
+    return;
+  }
+
+  message.textContent = "फोटो अपलोड होत आहे...";
+
+  try {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = Date.now() + "-" + safeName;
+
+    const { error: uploadError } = await supabaseClient
+      .storage
+      .from("gallery")
+      .upload(path, file, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (uploadError) {
+      message.textContent = "Upload Error: " + uploadError.message;
       return;
     }
 
-    const { error } = await supabaseClient
+    const { data: publicData } = supabaseClient
+      .storage
+      .from("gallery")
+      .getPublicUrl(path);
+
+    const { error: saveError } = await supabaseClient
       .from("gallery")
       .insert({
         title: title,
-        image_url: url.href
+        image_url: publicData.publicUrl
       });
 
-    if (error) {
-      message.textContent = "Error: " + error.message;
+    if (saveError) {
+      message.textContent = "फोटो अपलोड झाला, पण Gallery मध्ये सेव्ह झाला नाही: " + saveError.message;
       return;
     }
 
-    message.textContent = "Photo माहिती सेव्ह झाली!";
+    message.textContent = "फोटो यशस्वीरीत्या जोडला!";
     document.getElementById("galleryTitle").value = "";
-    document.getElementById("galleryUrl").value = "";
+    fileInput.value = "";
+    await loadGallery();
+
   } catch (error) {
-    message.textContent = "कृपया योग्य image URL द्या.";
+    message.textContent = "Error: " + error.message;
   }
 }
 
