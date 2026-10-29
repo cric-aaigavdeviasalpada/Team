@@ -1090,11 +1090,7 @@ async function quickUpdateScore() {
 
   const message = document.getElementById("quickScoreMessage");
 
-  if (
-    !matchId ||
-    runs === "" ||
-    wickets === "" ||
-    overs === "" ||
+ if (!matchId || !status || runs === "" || wickets === "" || overs === "" ||
     opponentRuns === "" ||
     opponentWickets === "" ||
     opponentOvers === ""
