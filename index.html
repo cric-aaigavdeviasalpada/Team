@@ -1159,6 +1159,16 @@ async function quickUpdateScore() {
   }
 
   message.textContent = "✅ बदललेला स्कोअर अपडेट झाला!";
+  [
+  "quickRuns",
+  "quickWickets",
+  "quickOvers",
+  "quickOpponentRuns",
+  "quickOpponentWickets",
+  "quickOpponentOvers"
+].forEach(id => {
+  document.getElementById(id).value = "";
+});
   await loadScoreboard();
 }
 
