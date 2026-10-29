@@ -1214,29 +1214,39 @@ function parseCricketOvers(overs) {
   return completedOvers * 6 + balls;
 }
 
+
+
 async function quickBallUpdate(runsOrWicket) {
   const matchId = document.getElementById("quickMatchId").value;
   const message = document.getElementById("quickScoreMessage");
+  const isOpponent =
+    document.getElementById("battingTeam").value === "opponent";
 
   if (!matchId) {
     message.textContent = "कृपया आधी मॅच निवडा.";
     return;
   }
 
+  const runsColumn = isOpponent ? "opponent_runs" : "team_runs";
+  const wicketsColumn = isOpponent ? "opponent_wickets" : "wickets";
+  const oversColumn = isOpponent ? "opponent_overs" : "overs";
+
   const { data: score, error: findError } = await supabaseClient
     .from("scoreboards")
-    .select("id, team_runs, wickets, overs")
+    .select(
+      "id, team_runs, wickets, overs, opponent_runs, opponent_wickets, opponent_overs"
+    )
     .eq("match_id", Number(matchId))
     .maybeSingle();
 
   if (findError || !score) {
     message.textContent = findError
       ? "Error: " + findError.message
-      : "आधी मुख्य Scoreboard मध्ये या मॅचचा स्कोअर सेव्ह करा.";
+      : "आधी या मॅचचा स्कोअर Scoreboard मध्ये सेव्ह करा.";
     return;
   }
 
-  const currentBalls = parseCricketOvers(score.overs);
+  const currentBalls = parseCricketOvers(score[oversColumn]);
 
   if (currentBalls === null) {
     message.textContent = "Overs चुकीचे आहेत. आधी Overs तपासा.";
@@ -1250,12 +1260,12 @@ async function quickBallUpdate(runsOrWicket) {
     Math.floor(newBalls / 6) + "." + (newBalls % 6);
 
   const updates = {
-    team_runs: Number(score.team_runs || 0) + runs,
-    wickets: Math.min(
+    [runsColumn]: Number(score[runsColumn] || 0) + runs,
+    [wicketsColumn]: Math.min(
       10,
-      Number(score.wickets || 0) + (isWicket ? 1 : 0)
+      Number(score[wicketsColumn] || 0) + (isWicket ? 1 : 0)
     ),
-    overs: Number(newOvers),
+    [oversColumn]: Number(newOvers),
     updated_at: new Date().toISOString()
   };
 
@@ -1269,9 +1279,13 @@ async function quickBallUpdate(runsOrWicket) {
     return;
   }
 
+  const teamName = isOpponent
+    ? "Opponent Team"
+    : "Aai Gavdevi Team";
+
   message.textContent = isWicket
-    ? "✅ Wicket! स्कोअर अपडेट झाला."
-    : "✅ +" + runs + " Runs! स्कोअर अपडेट झाला.";
+    ? "✅ " + teamName + " ची विकेट अपडेट झाली!"
+    : "✅ " + teamName + " चे " + runs + " Runs अपडेट झाले!";
 
   await loadScoreboard();
 }
