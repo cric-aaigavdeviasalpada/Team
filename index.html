@@ -1215,7 +1215,6 @@ function parseCricketOvers(overs) {
 }
 
 
-
 async function quickBallUpdate(runsOrWicket) {
   const matchId = document.getElementById("quickMatchId").value;
   const message = document.getElementById("quickScoreMessage");
@@ -1230,6 +1229,26 @@ async function quickBallUpdate(runsOrWicket) {
   const runsColumn = isOpponent ? "opponent_runs" : "team_runs";
   const wicketsColumn = isOpponent ? "opponent_wickets" : "wickets";
   const oversColumn = isOpponent ? "opponent_overs" : "overs";
+  const battingTeam = isOpponent ? "opponent" : "team";
+
+  const extraTypes = {
+    WD: { runs: 1, type: "wide", legal: false, label: "Wd" },
+    WD1: { runs: 2, type: "wide+1", legal: false, label: "Wd+1" },
+    WD2: { runs: 3, type: "wide+2", legal: false, label: "Wd+2" },
+    NB: { runs: 1, type: "no_ball", legal: false, label: "Nb" },
+    NB1: { runs: 2, type: "no_ball+1", legal: false, label: "Nb+1" },
+    NB2: { runs: 3, type: "no_ball+2", legal: false, label: "Nb+2" }
+  };
+
+  const isExtra = typeof runsOrWicket === "string" &&
+    Object.prototype.hasOwnProperty.call(extraTypes, runsOrWicket);
+
+  const extra = isExtra ? extraTypes[runsOrWicket] : null;
+  const isWicket = runsOrWicket === "W";
+  const runs = extra ? extra.runs : (isWicket ? 0 : Number(runsOrWicket));
+  const legalBall = extra ? extra.legal : true;
+  const eventType = extra ? extra.type : (isWicket ? "wicket" : "run");
+  const eventLabel = extra ? extra.label : (isWicket ? "W" : String(runs));
 
   const { data: score, error: findError } = await supabaseClient
     .from("scoreboards")
@@ -1253,11 +1272,8 @@ async function quickBallUpdate(runsOrWicket) {
     return;
   }
 
-  const isWicket = runsOrWicket === "W";
-  const runs = isWicket ? 0 : Number(runsOrWicket);
-  const newBalls = currentBalls + 1;
-  const newOvers =
-    Math.floor(newBalls / 6) + "." + (newBalls % 6);
+  const newBalls = currentBalls + (legalBall ? 1 : 0);
+  const newOvers = Math.floor(newBalls / 6) + "." + (newBalls % 6);
 
   const updates = {
     [runsColumn]: Number(score[runsColumn] || 0) + runs,
@@ -1269,26 +1285,47 @@ async function quickBallUpdate(runsOrWicket) {
     updated_at: new Date().toISOString()
   };
 
-  const { error } = await supabaseClient
+  const { error: updateError } = await supabaseClient
     .from("scoreboards")
     .update(updates)
     .eq("id", score.id);
 
-  if (error) {
-    message.textContent = "Error: " + error.message;
+  if (updateError) {
+    message.textContent = "Error: " + updateError.message;
     return;
   }
 
-  const teamName = isOpponent
-    ? "Opponent Team"
-    : "Aai Gavdevi Team";
+  const overNumber = Math.floor(currentBalls / 6) + 1;
+  const ballNumber = (currentBalls % 6) + 1;
 
-  message.textContent = isWicket
-    ? "✅ " + teamName + " ची विकेट अपडेट झाली!"
-    : "✅ " + teamName + " चे " + runs + " Runs अपडेट झाले!";
+  const { error: eventError } = await supabaseClient
+    .from("ball_events")
+    .insert({
+      match_id: Number(matchId),
+      batting_team: battingTeam,
+      runs: runs,
+      event_type: eventType,
+      legal_ball: legalBall,
+      over_number: overNumber,
+      ball_number: ballNumber
+    });
+
+  if (eventError) {
+    message.textContent =
+      "स्कोअर अपडेट झाला; पण बॉलचा इतिहास सेव्ह झाला नाही: " +
+      eventError.message;
+    await loadScoreboard();
+    return;
+  }
+
+  const teamName = isOpponent ? "Opponent Team" : "Aai Gavdevi Team";
+
+  message.textContent = "✅ " + teamName + " — " + eventLabel +
+    (legalBall ? " बॉल अपडेट झाला!" : " extra अपडेट झाले!");
 
   await loadScoreboard();
 }
+
 
 async function deleteScore(matchId) {
   const confirmDelete = confirm(
