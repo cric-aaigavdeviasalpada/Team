@@ -1022,6 +1022,11 @@ const isAdmin = dashboard && !dashboard.hidden;
         ${score.target != null
           ? `<p>🎯 Target: ${score.target}</p>`
           : ""}
+          ${isAdmin ? `
+  <button class="btn" onclick="deleteScore('${score.match_id}')">
+    🗑️ Delete Score
+  </button>
+` : ""}
       </div>
     `;
   }).join("");
