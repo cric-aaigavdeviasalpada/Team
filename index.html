@@ -833,9 +833,28 @@ container.innerHTML = data.map(match => `
 `).join("");
 }
 
+  async function deleteMatch(matchId) {
+  const confirmDelete = confirm(
+    "ही मॅच कायमची Delete करायची आहे का?"
+  );
+
+  if (!confirmDelete) return;
+
+  const { error } = await supabaseClient
+    .from("matches")
+    .delete()
+    .eq("id", matchId);
+
+  if (error) {
+    alert("मॅच Delete करता आली नाही: " + error.message);
+    return;
+  }
+
+  alert("मॅच यशस्वीरीत्या Delete झाली!");
+  await loadMatches();
+}
+  
 loadMatches();
-
-
 
 
 async function saveScore() {
