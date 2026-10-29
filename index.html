@@ -981,6 +981,9 @@ async function loadScoreboard() {
     return;
   }
 
+  const dashboard = document.getElementById("adminDashboard");
+const isAdmin = dashboard && !dashboard.hidden;
+  
   container.innerHTML = data.map(score => {
     const match = score.matches;
     const opponent = match?.opponent || "Opponent Team";
