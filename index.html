@@ -513,7 +513,7 @@ dashboard.scrollIntoView({ behavior: "smooth" });
   await loadUpdates();
   await loadGallery();
 }
-  
+
 
 async function saveGallery() {
   const title = document.getElementById("galleryTitle").value.trim();
@@ -815,14 +815,22 @@ async function loadMatches() {
     return;
   }
 
-  container.innerHTML = data.map(match => `
-    <div class="card">
-      <h3>🏏 Aai Gavdevi Asalpada vs ${match.opponent}</h3>
-      <p>📅 ${new Date(match.match_date).toLocaleString("en-IN")}</p>
-      <p>📍 ${match.venue}</p>
-      <p>${match.status || "Upcoming"}</p>
-    </div>
-  `).join("");
+  const isAdmin = document.getElementById("adminDashboard") &&
+                !document.getElementById("adminDashboard").hidden;
+
+container.innerHTML = data.map(match => `
+  <div class="card">
+    <h3>🏏 Aai Gavdevi Asalpada vs ${match.opponent}</h3>
+    <p>📅 ${new Date(match.match_date).toLocaleString("en-IN")}</p>
+    <p>📍 ${match.venue}</p>
+    <p>${match.status || "Upcoming"}</p>
+    ${isAdmin ? `
+      <button class="btn" onclick="deleteMatch('${match.id}')">
+        🗑️ Delete Match
+      </button>
+    ` : ""}
+  </div>
+`).join("");
 }
 
 loadMatches();
