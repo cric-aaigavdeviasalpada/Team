@@ -1098,7 +1098,26 @@ async function quickUpdateScore() {
 
   await loadScoreboard();
 }
+async function deleteScore(matchId) {
+  const confirmDelete = confirm(
+    "या मॅचचा Score कायमचा Delete करायचा आहे का?"
+  );
 
+  if (!confirmDelete) return;
+
+  const { error } = await supabaseClient
+    .from("scoreboards")
+    .delete()
+    .eq("match_id", matchId);
+
+  if (error) {
+    alert("Score Delete करता आला नाही: " + error.message);
+    return;
+  }
+
+  alert("Score यशस्वीरीत्या Delete झाला!");
+  await loadScoreboard();
+}
 
 loadScoreboard();
 
