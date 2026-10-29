@@ -856,6 +856,33 @@ container.innerHTML = data.map(match => `
   alert("मॅच यशस्वीरीत्या Delete झाली!");
   await loadMatches();
 }
+
+  async function loadScoreMatchOptions() {
+  const select = document.getElementById("scoreMatchId");
+  if (!select) return;
+
+  const { data, error } = await supabaseClient
+    .from("matches")
+    .select("id, opponent, match_date")
+    .order("match_date", { ascending: true });
+
+  if (error) {
+    console.error("मॅच Dropdown error:", error.message);
+    return;
+  }
+
+  select.innerHTML = '<option value="">मॅच निवडा</option>';
+
+  (data || []).forEach(match => {
+    const option = document.createElement("option");
+    option.value = match.id;
+    option.textContent =
+      `${match.opponent} — ${new Date(match.match_date).toLocaleDateString("en-IN")}`;
+    select.appendChild(option);
+  });
+}
+
+loadScoreMatchOptions();
   
 loadMatches();
 
