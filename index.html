@@ -1077,28 +1077,57 @@ const isAdmin = dashboard && !dashboard.hidden;
   }).join("");
 }
   
+
 async function quickUpdateScore() {
   const matchId = document.getElementById("quickMatchId").value.trim();
-  const runs = document.getElementById("quickRuns").value;
-  const wickets = document.getElementById("quickWickets").value;
-  const overs = document.getElementById("quickOvers").value;
-  const status = document.getElementById("quickMatchStatus").value;
-
-  const opponentRuns = document.getElementById("quickOpponentRuns").value;
-  const opponentWickets = document.getElementById("quickOpponentWickets").value;
-  const opponentOvers = document.getElementById("quickOpponentOvers").value;
-
   const message = document.getElementById("quickScoreMessage");
 
- if (!matchId || !status || runs === "" || wickets === "" || overs === "" ||
-    opponentRuns === "" ||
-    opponentWickets === "" ||
-    opponentOvers === ""
-  ) {
-    message.textContent = "कृपया मॅच निवडा आणि दोन्ही टीमचे सर्व स्कोअर भरा.";
+  if (!matchId) {
+    message.textContent = "कृपया मॅच निवडा.";
     return;
   }
 
+  const updates = {};
+
+  const fields = [
+    ["quickRuns", "team_runs", "Runs"],
+    ["quickWickets", "wickets", "Wickets"],
+    ["quickOvers", "overs", "Overs"],
+    ["quickOpponentRuns", "opponent_runs", "Opponent Runs"],
+    ["quickOpponentWickets", "opponent_wickets", "Opponent Wickets"],
+    ["quickOpponentOvers", "opponent_overs", "Opponent Overs"]
+  ];
+
+  let changedCount = 0;
+
+  for (const [inputId, column, label] of fields) {
+    const input = document.getElementById(inputId);
+
+    if (input && input.value.trim() !== "") {
+      const value = Number(input.value);
+
+      if (!Number.isFinite(value) || value < 0) {
+        message.textContent = label + " ची किंमत योग्य भरा.";
+        return;
+      }
+
+      updates[column] = value;
+      changedCount++;
+    }
+  }
+
+  const statusInput = document.getElementById("quickMatchStatus");
+
+  if (statusInput && statusInput.value !== "") {
+    updates.status = statusInput.value;
+  }
+
+  if (changedCount === 0 && !updates.status) {
+    message.textContent = "किमान एक आकडा किंवा Status बदला.";
+    return;
+  }
+
+  updates.updated_at = new Date().toISOString();
   message.textContent = "स्कोअर अपडेट होत आहे...";
 
   const { data: existing, error: findError } = await supabaseClient
@@ -1113,22 +1142,14 @@ async function quickUpdateScore() {
   }
 
   if (!existing) {
-    message.textContent = "या Match ID साठी Scoreboard नाही. आधी मुख्य Scoreboard फॉर्ममधून स्कोअर सेव्ह करा.";
+    message.textContent =
+      "या मॅचचा Scoreboard नाही. आधी मुख्य Scoreboard फॉर्ममधून स्कोअर सेव्ह करा.";
     return;
   }
 
   const { error } = await supabaseClient
     .from("scoreboards")
-    .update({
-      team_runs: Number(runs),
-      wickets: Number(wickets),
-      overs: Number(overs),
-      opponent_runs: Number(opponentRuns),
-      opponent_wickets: Number(opponentWickets),
-      opponent_overs: Number(opponentOvers),
-      status: status,
-      updated_at: new Date().toISOString()
-    })
+    .update(updates)
     .eq("id", existing.id);
 
   if (error) {
@@ -1137,10 +1158,10 @@ async function quickUpdateScore() {
     return;
   }
 
-  message.textContent = "✅ दोन्ही टीमचे स्कोअर अपडेट झाले!";
-
+  message.textContent = "✅ बदललेला स्कोअर अपडेट झाला!";
   await loadScoreboard();
 }
+
 async function deleteScore(matchId) {
   const confirmDelete = confirm(
     "या मॅचचा Score कायमचा Delete करायचा आहे का?"
