@@ -618,8 +618,20 @@ async function loadGallery() {
     const title = document.createElement("h3");
     title.textContent = photo.title || "Team Photo";
 
-    card.append(img, title);
-    container.appendChild(card);
+   card.append(img, title);
+
+const dashboard = document.getElementById("adminDashboard");
+
+if (dashboard && !dashboard.hidden) {
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "btn";
+  deleteBtn.textContent = "🗑️ Delete Photo";
+  deleteBtn.onclick = () => deleteGalleryPhoto(photo.id);
+
+  card.appendChild(deleteBtn);
+}
+
+container.appendChild(card);
   });
 }
 
