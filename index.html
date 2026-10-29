@@ -589,7 +589,7 @@ async function loadGallery() {
 
   const { data, error } = await supabaseClient
     .from("gallery")
-    .select("title, image_url");
+    .select("id, title, image_url");
 
   if (error) {
     container.textContent = "Gallery लोड झाली नाही: " + error.message;
