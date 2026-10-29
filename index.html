@@ -422,9 +422,9 @@ footer {
 <h3>⚡ Quick Score Update</h3>
 <p>चालू मॅचचा Match ID टाका आणि स्कोअर पटकन अपडेट करा.</p>
 
-<input id="quickMatchId" type="number" min="1"
-  placeholder="Match ID"
-  style="padding:10px;width:90%;margin:5px">
+<select id="quickMatchId" style="padding:10px;width:90%;margin:5px">
+  <option value="">मॅच निवडा</option>
+</select>
 
 <h4>🏏 Aai Gavdevi Team</h4>
 <input id="quickRuns" type="number" min="0"
@@ -857,9 +857,12 @@ container.innerHTML = data.map(match => `
   await loadMatches();
 }
 
-  async function loadScoreMatchOptions() {
+ 
+async function loadScoreMatchOptions() {
   const select = document.getElementById("scoreMatchId");
-  if (!select) return;
+  const quickSelect = document.getElementById("quickMatchId");
+
+  if (!select && !quickSelect) return;
 
   const { data, error } = await supabaseClient
     .from("matches")
@@ -871,14 +874,19 @@ container.innerHTML = data.map(match => `
     return;
   }
 
-  select.innerHTML = '<option value="">मॅच निवडा</option>';
+  const dropdowns = [select, quickSelect].filter(Boolean);
 
-  (data || []).forEach(match => {
-    const option = document.createElement("option");
-    option.value = match.id;
-    option.textContent =
-      `${match.opponent} — ${new Date(match.match_date).toLocaleDateString("en-IN")}`;
-    select.appendChild(option);
+  dropdowns.forEach(dropdown => {
+    dropdown.innerHTML = '<option value="">मॅच निवडा</option>';
+
+    (data || []).forEach(match => {
+      const option = document.createElement("option");
+      option.value = match.id;
+      option.textContent =
+        `${match.opponent} — ${new Date(match.match_date).toLocaleDateString("en-IN")}`;
+
+      dropdown.appendChild(option);
+    });
   });
 }
 
