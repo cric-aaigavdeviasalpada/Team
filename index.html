@@ -1187,6 +1187,87 @@ async function quickUpdateScore() {
   await loadScoreboard();
 }
 
+  
+function parseCricketOvers(overs) {
+  const parts = String(overs || 0).split(".");
+  const completedOvers = Number(parts[0]);
+  const balls = Number(parts[1] || 0);
+
+  if (
+    !Number.isInteger(completedOvers) ||
+    !Number.isInteger(balls) ||
+    completedOvers < 0 ||
+    balls < 0 ||
+    balls > 5
+  ) {
+    return null;
+  }
+
+  return completedOvers * 6 + balls;
+}
+
+async function quickBallUpdate(runsOrWicket) {
+  const matchId = document.getElementById("quickMatchId").value;
+  const message = document.getElementById("quickScoreMessage");
+
+  if (!matchId) {
+    message.textContent = "कृपया आधी मॅच निवडा.";
+    return;
+  }
+
+  const { data: score, error: findError } = await supabaseClient
+    .from("scoreboards")
+    .select("id, team_runs, wickets, overs")
+    .eq("match_id", Number(matchId))
+    .maybeSingle();
+
+  if (findError || !score) {
+    message.textContent = findError
+      ? "Error: " + findError.message
+      : "आधी मुख्य Scoreboard मध्ये या मॅचचा स्कोअर सेव्ह करा.";
+    return;
+  }
+
+  const currentBalls = parseCricketOvers(score.overs);
+
+  if (currentBalls === null) {
+    message.textContent = "Overs चुकीचे आहेत. आधी Overs तपासा.";
+    return;
+  }
+
+  const isWicket = runsOrWicket === "W";
+  const runs = isWicket ? 0 : Number(runsOrWicket);
+  const newBalls = currentBalls + 1;
+  const newOvers =
+    Math.floor(newBalls / 6) + "." + (newBalls % 6);
+
+  const updates = {
+    team_runs: Number(score.team_runs || 0) + runs,
+    wickets: Math.min(
+      10,
+      Number(score.wickets || 0) + (isWicket ? 1 : 0)
+    ),
+    overs: Number(newOvers),
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await supabaseClient
+    .from("scoreboards")
+    .update(updates)
+    .eq("id", score.id);
+
+  if (error) {
+    message.textContent = "Error: " + error.message;
+    return;
+  }
+
+  message.textContent = isWicket
+    ? "✅ Wicket! स्कोअर अपडेट झाला."
+    : "✅ +" + runs + " Runs! स्कोअर अपडेट झाला.";
+
+  await loadScoreboard();
+}
+
 async function deleteScore(matchId) {
   const confirmDelete = confirm(
     "या मॅचचा Score कायमचा Delete करायचा आहे का?"
