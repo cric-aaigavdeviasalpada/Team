@@ -680,7 +680,7 @@ container.innerHTML = data.map(update => `
   <div class="card">
     <h3>${update.title}</h3>
     <p>${update.content}</p>
-   ${document.getElementById("adminDashboard")?.hidden === false ? `
+   ${document.getElementById("adminDashboard") && !document.getElementById("adminDashboard").hidden ? `
   <button class="btn" onclick="deleteUpdate('${update.id}')">
     🗑️ Delete Update
   </button>
