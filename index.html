@@ -1130,6 +1130,7 @@ async function quickUpdateScore() {
       opponent_runs: Number(opponentRuns),
       opponent_wickets: Number(opponentWickets),
       opponent_overs: Number(opponentOvers),
+      status: status,
       updated_at: new Date().toISOString()
     })
     .eq("id", existing.id);
