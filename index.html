@@ -637,6 +637,28 @@ container.appendChild(card);
 
 loadGallery();
 
+  
+async function deleteGalleryPhoto(photoId) {
+  const confirmDelete = confirm(
+    "हा फोटो कायमचा Delete करायचा आहे का?"
+  );
+
+  if (!confirmDelete) return;
+
+  const { error } = await supabaseClient
+    .from("gallery")
+    .delete()
+    .eq("id", photoId);
+
+  if (error) {
+    alert("फोटो Delete करता आला नाही: " + error.message);
+    return;
+  }
+
+  alert("फोटो यशस्वीरीत्या Delete झाला!");
+  await loadGallery();
+}
+
 async function saveUpdate() {
   const title = document.getElementById("updateTitle").value.trim();
   const content = document.getElementById("updateContent").value.trim();
