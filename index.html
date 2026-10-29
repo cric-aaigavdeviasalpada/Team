@@ -680,9 +680,11 @@ container.innerHTML = data.map(update => `
   <div class="card">
     <h3>${update.title}</h3>
     <p>${update.content}</p>
-    <button class="btn" onclick="deleteUpdate('${update.id}')">
-      🗑️ Delete Update
-    </button>
+   ${document.getElementById("adminDashboard")?.hidden === false ? `
+  <button class="btn" onclick="deleteUpdate('${update.id}')">
+    🗑️ Delete Update
+  </button>
+` : ""}
   </div>
 `).join("");
 
