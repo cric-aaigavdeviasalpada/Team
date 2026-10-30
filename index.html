@@ -1059,6 +1059,54 @@ async function loadScoreboard() {
   }
 
   const dashboard = document.getElementById("adminDashboard");
+  const matchIds = data.map(score => score.match_id);
+
+const { data: ballEvents, error: ballEventsError } = await supabaseClient
+  .from("ball_events")
+  .select("match_id, batting_team, runs, event_type, event_label, legal_ball, over_number, created_at")
+  .in("match_id", matchIds)
+  .order("created_at", { ascending: true });
+
+if (ballEventsError) {
+  console.error("Ball history error:", ballEventsError.message);
+}
+
+const getOverSummary = (matchId, battingTeam) => {
+  const events = (ballEvents || []).filter(event =>
+    event.match_id === matchId &&
+    event.batting_team === battingTeam
+  );
+
+  const overGroups = {};
+
+  events.forEach(event => {
+    if (!overGroups[event.over_number]) {
+      overGroups[event.over_number] = [];
+    }
+
+    let label = event.event_label;
+
+    if (!label || label === "Run") {
+      label = event.event_type === "wicket"
+        ? "W"
+        : event.runs;
+    }
+
+    overGroups[event.over_number].push(label);
+  });
+
+  const overNumbers = Object.keys(overGroups)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .slice(-2);
+
+  return overNumbers.map(over => `
+    <p style="margin:5px 0">
+      <strong>Over ${over}:</strong>
+      ${overGroups[over].join(", ")}
+    </p>
+  `).join("");
+};
 const isAdmin = dashboard && !dashboard.hidden;
   
   container.innerHTML = data.map(score => {
@@ -1089,12 +1137,20 @@ const isAdmin = dashboard && !dashboard.hidden;
         <h4>🏏 Aai Gavdevi Team</h4>
         <h2>${score.team_runs}/${score.wickets}</h2>
         <p>Overs: ${score.overs}</p>
+        <div style="background:#252832;padding:8px;margin:8px 0;border-radius:8px">
+  <strong>📊 Over Summary:</strong>
+  ${getOverSummary(score.match_id, "team")}
+</div>
 
         <hr>
 
         <h4>🏏 ${opponent}</h4>
         <h2>${score.opponent_runs ?? 0}/${score.opponent_wickets ?? 0}</h2>
         <p>Overs: ${score.opponent_overs ?? 0}</p>
+        <div style="background:#252832;padding:8px;margin:8px 0;border-radius:8px">
+  <strong>📊 Over Summary:</strong>
+  ${getOverSummary(score.match_id, "opponent")}
+</div>
 
         ${score.target != null
           ? `<p>🎯 Target: ${score.target}</p>`
