@@ -1084,12 +1084,15 @@ setInterval(() => {
 
 
 async function loadScoreboard() {
-  const container = document.getElementById("scoreboardContainer");
+ const containers = [
+  document.getElementById("scoreboardContainer"),
+  document.getElementById("adminScoreboardContainer")
+].filter(Boolean);
 
-  if (!container) {
-    console.error("scoreboardContainer सापडला नाही");
-    return;
-  }
+if (containers.length === 0) {
+  console.error("Scoreboard containers सापडले नाहीत");
+  return;
+}
 
   const { data, error } = await supabaseClient
     .from("scoreboards")
