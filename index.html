@@ -1219,6 +1219,9 @@ const isAdmin = dashboard && !dashboard.hidden;
         ${score.target != null
           ? `<p>🎯 Target: ${score.target}</p>`
           : ""}
+          
+          ${getChaseSummary(score)}
+          
           ${isAdmin ? `
   <button class="btn" onclick="deleteScore('${score.match_id}')">
     🗑️ Delete Score
