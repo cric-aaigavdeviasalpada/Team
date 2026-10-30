@@ -1348,6 +1348,18 @@ async function quickBallUpdate(runsOrWicket) {
   }
 
   const newBalls = currentBalls + (legalBall ? 1 : 0);
+  const totalOvers = Number(score.total_overs || 5);
+const totalBalls = totalOvers * 6;
+const ballsRemaining = Math.max(0, totalBalls - newBalls);
+
+const target = Number(score.target || 0);
+
+const battingRuns = Number(score[runsColumn] || 0) + runs;
+const runsRemaining = Math.max(0, target - battingRuns);
+
+const requiredRunRate = ballsRemaining > 0
+  ? (runsRemaining / ballsRemaining) * 6
+  : 0;
   const newOvers = Math.floor(newBalls / 6) + "." + (newBalls % 6);
 
   const updates = {
