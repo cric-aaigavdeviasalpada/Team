@@ -395,6 +395,14 @@ footer {
 <select id="scoreMatchId" style="padding:10px;width:90%;margin:5px">
   <option value="">मॅच निवडा</option>
 </select>
+  <label for="totalOvers">🏏 मॅचचे एकूण ओव्हर्स:</label>
+<select id="totalOvers" style="padding:10px;width:90%;margin:5px">
+  <option value="1">1 Over</option>
+  <option value="2">2 Overs</option>
+  <option value="3">3 Overs</option>
+  <option value="4">4 Overs</option>
+  <option value="5" selected>5 Overs</option>
+</select>
 
 <h4>🏏 Aai Gavdevi Team</h4>
 <input id="teamRuns" type="number" min="0" placeholder="Runs" style="padding:10px;width:90%;margin:5px">
@@ -941,6 +949,7 @@ async function saveScore() {
   const runs = document.getElementById("teamRuns").value;
   const wickets = document.getElementById("wickets").value;
   const overs = document.getElementById("overs").value;
+  const totalOvers = document.getElementById("totalOvers").value;
 
   const opponentRuns = document.getElementById("opponentRuns").value;
   const opponentWickets = document.getElementById("opponentWickets").value;
@@ -978,6 +987,7 @@ async function saveScore() {
 
   const scoreData = {
     match_id: Number(matchId),
+    total_overs: Number(totalOvers),
     team_runs: Number(runs),
     wickets: Number(wickets),
     overs: Number(overs),
