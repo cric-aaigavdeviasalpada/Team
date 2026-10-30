@@ -1328,7 +1328,7 @@ async function quickBallUpdate(runsOrWicket) {
   const { data: score, error: findError } = await supabaseClient
     .from("scoreboards")
    .select(
-  "id, team_runs, wickets, overs, opponent_runs, opponent_wickets, opponent_overs, total_overs"
+  "id, team_runs, wickets, overs, opponent_runs, opponent_wickets, opponent_overs, total_overs, target"
 )
     .eq("match_id", Number(matchId))
     .maybeSingle();
@@ -1353,6 +1353,14 @@ const totalBalls = totalOvers * 6;
 const ballsRemaining = Math.max(0, totalBalls - newBalls);
 
 const target = Number(score.target || 0);
+  console.log("CHASE DEBUG:", {
+  battingTeam,
+  target,
+  totalOvers: score.total_overs,
+  runsRemaining,
+  ballsRemaining,
+  requiredRunRate
+});
 
 const battingRuns = Number(score[runsColumn] || 0) + runs;
 const runsRemaining = Math.max(0, target - battingRuns);
@@ -1410,6 +1418,13 @@ const requiredRunRate = ballsRemaining > 0
 
   message.textContent = "✅ " + teamName + " — " + eventLabel +
     (legalBall ? " बॉल अपडेट झाला!" : " extra अपडेट झाले!");
+  if (isOpponent || target > 0) {
+  const chaseMessage = ballsRemaining > 0
+    ? ` | 🎯 ${runsRemaining} धावा ${ballsRemaining} बॉलमध्ये हव्यात | RRR: ${requiredRunRate.toFixed(2)}`
+    : ` | 🎯 ${runsRemaining} धावा बाकी | ओव्हर्स पूर्ण`;
+
+  message.textContent += chaseMessage;
+}
 
   await loadScoreboard();
 }
