@@ -1309,15 +1309,16 @@ async function quickBallUpdate(runsOrWicket) {
 
   const { error: eventError } = await supabaseClient
     .from("ball_events")
-    .insert({
-      match_id: Number(matchId),
-      batting_team: battingTeam,
-      runs: runs,
-      event_type: eventType,
-      legal_ball: legalBall,
-      over_number: overNumber,
-      ball_number: ballNumber
-    });
+.insert({
+  match_id: Number(matchId),
+  batting_team: battingTeam,
+  runs: runs,
+  event_type: eventType,
+  event_label: eventLabel,
+  legal_ball: legalBall,
+  over_number: overNumber,
+  ball_number: ballNumber
+});
 
   if (eventError) {
     message.textContent =
