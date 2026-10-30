@@ -1327,9 +1327,9 @@ async function quickBallUpdate(runsOrWicket) {
 
   const { data: score, error: findError } = await supabaseClient
     .from("scoreboards")
-    .select(
-      "id, team_runs, wickets, overs, opponent_runs, opponent_wickets, opponent_overs"
-    )
+   .select(
+  "id, team_runs, wickets, overs, opponent_runs, opponent_wickets, opponent_overs, total_overs"
+)
     .eq("match_id", Number(matchId))
     .maybeSingle();
 
