@@ -455,22 +455,46 @@ footer {
   <button type="button" class="btn" onclick="quickBallUpdate(6)">+6</button>
   <button type="button" class="btn" onclick="quickBallUpdate('W')"> विकेट / Wicket</button>
   
-<button type="button" class="btn" onclick="quickBallUpdate('WD')">Wide (+1)</button>
-<button type="button" class="btn" onclick="quickBallUpdate('NB')">No Ball (+1)</button>
-<hr>
-
-<h4>➕ Extra Runs</h4>
-
 <button type="button" class="btn"
   onclick="quickBallUpdate('WD')">
-  Wide (+1)
+  Wide
 </button>
 
 <button type="button" class="btn"
   onclick="quickBallUpdate('NB')">
-  No Ball (+1)
+  No Ball
+</button>
+<hr>
+
+<h4>➕ Custom Extra Runs</h4>
+
+<input
+  id="customWideRuns"
+  type="number"
+  min="1"
+  max="10"
+  placeholder="Wide सोबत अतिरिक्त Runs"
+  style="padding:10px;width:90%;margin:5px"
+>
+
+<button type="button" class="btn"
+  onclick="quickBallUpdate('WD_CUSTOM')">
+  Wide + Custom Runs
 </button>
 
+<input
+  id="customNoBallRuns"
+  type="number"
+  min="1"
+  max="10"
+  placeholder="No Ball सोबत अतिरिक्त Runs"
+  style="padding:10px;width:90%;margin:5px"
+>
+
+<button type="button" class="btn"
+  onclick="quickBallUpdate('NB_CUSTOM')">
+  No Ball + Custom Runs
+</button>
 </div>
   
   
@@ -1372,14 +1396,44 @@ async function quickBallUpdate(runsOrWicket) {
   const oversColumn = isOpponent ? "opponent_overs" : "overs";
   const battingTeam = isOpponent ? "opponent" : "team";
 
-  const extraTypes = {
+    const extraTypes = {
     WD: { runs: 1, type: "wide", legal: false, label: "Wd" },
-    WD1: { runs: 2, type: "wide+1", legal: false, label: "Wd+1" },
-    WD2: { runs: 3, type: "wide+2", legal: false, label: "Wd+2" },
-    NB: { runs: 1, type: "no_ball", legal: false, label: "Nb" },
-    NB1: { runs: 2, type: "no_ball+1", legal: false, label: "Nb+1" },
-    NB2: { runs: 3, type: "no_ball+2", legal: false, label: "Nb+2" }
+    NB: { runs: 1, type: "no_ball", legal: false, label: "Nb" }
   };
+
+  let customRuns = 0;
+
+  if (runsOrWicket === "WD_CUSTOM") {
+    customRuns = Number(document.getElementById("customWideRuns").value);
+
+    if (!Number.isInteger(customRuns) || customRuns < 1 || customRuns > 10) {
+      message.textContent = "Wide साठी 1 ते 10 पर्यंत Custom Runs भरा.";
+      return;
+    }
+
+    extraTypes.WD_CUSTOM = {
+      runs: 1 + customRuns,
+      type: "wide",
+      legal: false,
+      label: "Wd+" + customRuns
+    };
+  }
+
+  if (runsOrWicket === "NB_CUSTOM") {
+    customRuns = Number(document.getElementById("customNoBallRuns").value);
+
+    if (!Number.isInteger(customRuns) || customRuns < 1 || customRuns > 10) {
+      message.textContent = "No Ball साठी 1 ते 10 पर्यंत Custom Runs भरा.";
+      return;
+    }
+
+    extraTypes.NB_CUSTOM = {
+      runs: 1 + customRuns,
+      type: "no_ball",
+      legal: false,
+      label: "Nb+" + customRuns
+    };
+  }
 
   const isExtra = typeof runsOrWicket === "string" &&
     Object.prototype.hasOwnProperty.call(extraTypes, runsOrWicket);
@@ -1387,10 +1441,9 @@ async function quickBallUpdate(runsOrWicket) {
   const extra = isExtra ? extraTypes[runsOrWicket] : null;
   const isWicket = runsOrWicket === "W";
   const runs = extra ? extra.runs : (isWicket ? 0 : Number(runsOrWicket));
-  const legalBall = extra ? extra.legal : true;
+  const legalBall = extra ? false : true;
   const eventType = extra ? extra.type : (isWicket ? "wicket" : "run");
   const eventLabel = extra ? extra.label : (isWicket ? "W" : String(runs));
-
   const { data: score, error: findError } = await supabaseClient
     .from("scoreboards")
    .select(
