@@ -1044,6 +1044,7 @@ async function loadScoreboard() {
     .from("scoreboards")
     .select(`
       status,
+      total_overs,
       match_id,
       team_runs,
       wickets,
@@ -1080,7 +1081,60 @@ const { data: ballEvents, error: ballEventsError } = await supabaseClient
 if (ballEventsError) {
   console.error("Ball history error:", ballEventsError.message);
 }
+const getChaseSummary = (score) => {
+  const events = (ballEvents || []).filter(event =>
+    Number(event.match_id) === Number(score.match_id)
+  );
 
+  if (!score.target || events.length === 0) return "";
+
+  const latestEvent = events[events.length - 1];
+  const chasingTeam = latestEvent.batting_team;
+
+  const inningsEvents = events.filter(event =>
+    event.batting_team === chasingTeam
+  );
+
+  const legalBalls = inningsEvents.filter(event =>
+    event.legal_ball === true
+  ).length;
+
+  const totalBalls = Number(score.total_overs || 5) * 6;
+  const ballsRemaining = Math.max(0, totalBalls - legalBalls);
+
+  const runsColumn = chasingTeam === "opponent"
+    ? "opponent_runs"
+    : "team_runs";
+
+  const currentRuns = Number(score[runsColumn] || 0);
+  const runsRemaining = Math.max(0, Number(score.target) - currentRuns);
+
+  const rrr = ballsRemaining > 0
+    ? (runsRemaining / ballsRemaining) * 6
+    : 0;
+
+  const chaseTeamName = chasingTeam === "opponent"
+    ? (score.matches?.opponent || "Opponent Team")
+    : "Aai Gavdevi Team";
+
+  let message = "";
+
+  if (runsRemaining <= 0) {
+    message = `🏆 ${chaseTeamName} जिंकली!`;
+  } else if (ballsRemaining <= 0) {
+    message = `🎯 ${runsRemaining} धावा बाकी | ओव्हर्स पूर्ण`;
+  } else {
+    message = `🎯 ${runsRemaining} धावा ${ballsRemaining} बॉलमध्ये हव्यात | RRR: ${rrr.toFixed(2)}`;
+  }
+
+  return `
+    <div style="background:#3b3020;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #d69e36">
+      <strong>🏏 ${chaseTeamName} Chase</strong>
+      <p style="margin:8px 0">${message}</p>
+    </div>
+  `;
+};
+  
 const getOverSummary = (matchId, battingTeam) => {
   const events = (ballEvents || []).filter(event =>
     event.match_id === matchId &&
