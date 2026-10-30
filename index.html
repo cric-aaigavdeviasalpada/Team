@@ -1557,7 +1557,125 @@ if (target > 0) {
 
   await loadScoreboard();
 }
+async function undoLastBall() {
+  const matchId = document.getElementById("quickMatchId").value;
+  const message = document.getElementById("quickScoreMessage");
 
+  if (!matchId) {
+    message.textContent = "कृपया आधी मॅच निवडा.";
+    return;
+  }
+
+  const confirmUndo = confirm(
+    "शेवटची Ball Entry Delete करायची आहे का?"
+  );
+
+  if (!confirmUndo) return;
+
+  // शेवटची Ball Entry शोधा
+  const { data: event, error: eventError } = await supabaseClient
+    .from("ball_events")
+    .select("*")
+    .eq("match_id", Number(matchId))
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (eventError || !event) {
+    message.textContent = eventError
+      ? "Error: " + eventError.message
+      : "Delete करण्यासाठी कोणतीही Ball Entry नाही.";
+    return;
+  }
+
+  // Scoreboard मिळवा
+  const { data: score, error: scoreError } = await supabaseClient
+    .from("scoreboards")
+    .select("*")
+    .eq("match_id", Number(matchId))
+    .maybeSingle();
+
+  if (scoreError || !score) {
+    message.textContent = "Scoreboard मिळाला नाही.";
+    return;
+  }
+
+  const isOpponent = event.batting_team === "opponent";
+
+  const runsColumn = isOpponent ? "opponent_runs" : "team_runs";
+  const wicketsColumn = isOpponent ? "opponent_wickets" : "wickets";
+  const oversColumn = isOpponent ? "opponent_overs" : "overs";
+
+  const currentBalls = parseCricketOvers(score[oversColumn]);
+
+  if (currentBalls === null) {
+    message.textContent = "Overs चुकीचे आहेत.";
+    return;
+  }
+
+  const previousBalls = Math.max(
+    0,
+    currentBalls - (event.legal_ball ? 1 : 0)
+  );
+
+  const previousOvers =
+    Math.floor(previousBalls / 6) + "." + (previousBalls % 6);
+
+  const updates = {
+    [runsColumn]: Math.max(
+      0,
+      Number(score[runsColumn] || 0) - Number(event.runs || 0)
+    ),
+    [wicketsColumn]: Math.max(
+      0,
+      Number(score[wicketsColumn] || 0) -
+        (event.event_type === "wicket" ? 1 : 0)
+    ),
+    [oversColumn]: Number(previousOvers),
+    updated_at: new Date().toISOString()
+  };
+
+  // आधी Ball History मधून Entry Delete करा
+  const { error: deleteError } = await supabaseClient
+    .from("ball_events")
+    .delete()
+    .eq("id", event.id);
+
+  if (deleteError) {
+    message.textContent = "Entry Delete झाली नाही: " + deleteError.message;
+    return;
+  }
+
+  // Scoreboard मागच्या स्थितीत आणा
+  const { error: updateError } = await supabaseClient
+    .from("scoreboards")
+    .update(updates)
+    .eq("id", score.id);
+
+  if (updateError) {
+    // Scoreboard update अयशस्वी झाल्यास History परत सेव्ह करा
+    await supabaseClient.from("ball_events").insert({
+      match_id: event.match_id,
+      batting_team: event.batting_team,
+      runs: event.runs,
+      event_type: event.event_type,
+      event_label: event.event_label,
+      legal_ball: event.legal_ball,
+      over_number: event.over_number,
+      ball_number: event.ball_number,
+      created_at: event.created_at
+    });
+
+    message.textContent = "Score Update Error: " + updateError.message;
+    return;
+  }
+
+  message.textContent =
+    "↩️ शेवटची Entry (" + event.event_label + ") Delete झाली!";
+
+  await loadScoreboard();
+}
 
 async function deleteScore(matchId) {
   const confirmDelete = confirm(
