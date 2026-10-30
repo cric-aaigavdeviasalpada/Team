@@ -1113,13 +1113,16 @@ if (containers.length === 0) {
 
   if (error) {
     console.error("Scoreboard error:", error.message);
-    container.innerHTML = "<p>Scoreboard लोड होत नाही.</p>";
+    containers.forEach(container => {
+  container.innerHTML = "<p>Scoreboard लोड होत नाही.</p>";
+});
     return;
   }
 
   if (!data || data.length === 0) {
-    container.innerHTML =
-      '<div class="card">सध्या स्कोअर उपलब्ध नाही.</div>';
+    containers.forEach(container => {
+  container.innerHTML = '<div class="card">सध्या स्कोअर उपलब्ध नाही.</div>';
+});
     return;
   }
 
@@ -1228,7 +1231,7 @@ const getOverSummary = (matchId, battingTeam) => {
 };
 const isAdmin = dashboard && !dashboard.hidden;
   
-  container.innerHTML = data.map(score => {
+  const scoreboardHTML = data.map(score => {
     const match = score.matches;
     const opponent = match?.opponent || "Opponent Team";
 
@@ -1285,6 +1288,10 @@ const isAdmin = dashboard && !dashboard.hidden;
       </div>
     `;
   }).join("");
+
+containers.forEach(container => {
+  container.innerHTML = scoreboardHTML;
+});
 }
   
 
