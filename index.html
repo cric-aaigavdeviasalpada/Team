@@ -1081,6 +1081,11 @@ const { data: ballEvents, error: ballEventsError } = await supabaseClient
 if (ballEventsError) {
   console.error("Ball history error:", ballEventsError.message);
 }
+  console.log("CHASE PUBLIC DEBUG:", {
+  scoreboard: data,
+  ballEvents: ballEvents,
+  ballEventsError: ballEventsError
+});
 const getChaseSummary = (score) => {
   const events = (ballEvents || []).filter(event =>
     Number(event.match_id) === Number(score.match_id)
