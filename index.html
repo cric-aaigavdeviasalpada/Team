@@ -1531,6 +1531,13 @@ const newOvers = Math.floor(newBalls / 6) + "." + (newBalls % 6);
 
   message.textContent = "✅ " + teamName + " — " + eventLabel +
     (legalBall ? " बॉल अपडेट झाला!" : " extra अपडेट झाले!");
+    if (runsOrWicket === "WD_CUSTOM") {
+    document.getElementById("customWideRuns").value = "";
+  }
+
+  if (runsOrWicket === "NB_CUSTOM") {
+    document.getElementById("customNoBallRuns").value = "";
+  }
 if (target > 0) {
   const chaseMessage = ballsRemaining > 0
     ? ` | 🎯 ${runsRemaining} धावा ${ballsRemaining} बॉलमध्ये हव्यात | RRR: ${requiredRunRate.toFixed(2)}`
