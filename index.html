@@ -1992,9 +1992,7 @@ const scorecardContainer = document.getElementById("battingScorecardContainer");
 
 if (scorecardContainer) {
   scorecardContainer.innerHTML = data.map(score => {
-    const match = matches.find(m =>
-      Number(m.id) === Number(score.match_id)
-    );
+   const match = score.matches;
 
     const opponent = match?.opponent || "Opponent";
 
