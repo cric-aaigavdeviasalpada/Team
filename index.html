@@ -1075,11 +1075,23 @@ async function loadPlayingXISetup() {
     ourContainer.appendChild(label);
   });
 
-   playingXIOpponentNames = Array.from(
-    { length: 11 },
-    (_, index) => `Opponent Player ${index + 1}`
-  );
+     const { data: matchData, error: matchError } = await supabaseClient
+    .from("matches")
+    .select("opponent")
+    .eq("id", Number(matchId))
+    .single();
 
+  if (matchError) {
+    message.textContent = "Match Error: " + matchError.message;
+    return;
+  }
+
+  const opponentTeamName = matchData.opponent.trim();
+
+  playingXIOpponentNames = Array.from(
+    { length: 11 },
+    (_, index) => `${opponentTeamName} ${index + 1}`
+  );
   opponentContainer.innerHTML = `
     <h4>🆚 Opponent Team - 11 Players</h4>
     <div id="opponentPlayerList"></div>
