@@ -418,6 +418,35 @@ footer {
 <hr>
 <h3>🏏 Match Playing XI Setup</h3>
 
+  <h3>🪙 Match Toss Details</h3>
+
+<label>Select Match</label>
+<select id="tossMatchId"
+  style="padding:10px;width:90%;margin:5px">
+  <option value="">मॅच निवडा</option>
+</select>
+
+<label>Toss Winner</label>
+<select id="tossWinner"
+  style="padding:10px;width:90%;margin:5px">
+  <option value="our">Aai Gavdevi Asalpada</option>
+  <option value="opponent">Opponent Team</option>
+</select>
+
+<label>Toss Decision</label>
+<select id="tossDecision"
+  style="padding:10px;width:90%;margin:5px">
+  <option value="bat">Batting</option>
+  <option value="bowl">Bowling</option>
+</select>
+
+<button class="btn" onclick="saveTossDetails()">
+  💾 Save Toss Details
+</button>
+
+<p id="tossMessage"></p>
+<hr>
+  
 <p>मॅच निवडून आपल्या टीमची Playing XI ठरवा.</p>
 
 <select id="playingXIMatch"
