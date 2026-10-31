@@ -638,6 +638,7 @@ dashboard.scrollIntoView({ behavior: "smooth" });
   await loadUpdates();
   await loadGallery();
   await loadMatches();
+  await loadTeamPlayers();
 }
 
 
@@ -874,7 +875,65 @@ async function deleteUpdate(id) {
   alert("Update यशस्वीरीत्या Delete झाला!");
   await loadUpdates();
 }
+async function addTeamPlayer() {
+  const input = document.getElementById("newPlayerName");
+  const message = document.getElementById("playerMessage");
+  const playerName = input.value.trim();
 
+  if (!playerName) {
+    message.textContent = "कृपया खेळाडूचे नाव टाका.";
+    return;
+  }
+
+  message.textContent = "खेळाडू सेव्ह होत आहे...";
+
+  const { error } = await supabaseClient
+    .from("team_players")
+    .insert([{ player_name: playerName }]);
+
+  if (error) {
+    message.textContent = "Error: " + error.message;
+    return;
+  }
+
+  message.textContent = "✅ खेळाडू यशस्वीरीत्या सेव्ह झाला!";
+  input.value = "";
+
+  await loadTeamPlayers();
+}
+
+async function loadTeamPlayers() {
+  const container = document.getElementById("teamPlayersList");
+
+  if (!container) return;
+
+  container.textContent = "खेळाडू लोड होत आहेत...";
+
+  const { data, error } = await supabaseClient
+    .from("team_players")
+    .select("id, player_name")
+    .eq("is_active", true)
+    .order("player_name", { ascending: true });
+
+  if (error) {
+    container.textContent = "Player List Error: " + error.message;
+    return;
+  }
+
+  container.replaceChildren();
+
+  if (!data || data.length === 0) {
+    container.textContent = "अजून खेळाडू जोडलेले नाहीत.";
+    return;
+  }
+
+  data.forEach((player, index) => {
+    const item = document.createElement("div");
+    item.className = "card";
+    item.textContent = `${index + 1}. ${player.player_name}`;
+    container.appendChild(item);
+  });
+}
   
 async function saveMatch() {
   const opponent = document.getElementById("opponent").value.trim();
