@@ -1216,6 +1216,42 @@ async function savePlayingXI() {
 
   message.textContent = "✅ Playing XI यशस्वीरीत्या सेव्ह झाली!";
 }
+async function saveTossDetails() {
+  const matchId = document.getElementById("tossMatchId").value;
+  const tossWinner = document.getElementById("tossWinner").value;
+  const tossDecision = document.getElementById("tossDecision").value;
+  const message = document.getElementById("tossMessage");
+
+  if (!matchId) {
+    message.textContent = "कृपया मॅच निवडा.";
+    return;
+  }
+
+  const battingFirst =
+    tossDecision === "bat"
+      ? tossWinner
+      : (tossWinner === "our" ? "opponent" : "our");
+
+  message.textContent = "Toss Details सेव्ह होत आहेत...";
+
+  const { error } = await supabaseClient
+    .from("matches")
+    .update({
+      toss_winner: tossWinner,
+      toss_decision: tossDecision,
+      batting_first: battingFirst
+    })
+    .eq("id", Number(matchId));
+
+  if (error) {
+    message.textContent = "Error: " + error.message;
+    return;
+  }
+
+  message.textContent =
+    "✅ Toss Details सेव्ह झाले! प्रथम Batting: " +
+    (battingFirst === "our" ? "Aai Gavdevi Asalpada" : "Opponent Team");
+}
   
 async function saveMatch() {
   const opponent = document.getElementById("opponent").value.trim();
@@ -1326,8 +1362,9 @@ async function loadScoreMatchOptions() {
   const select = document.getElementById("scoreMatchId");
 const quickSelect = document.getElementById("quickMatchId");
 const playingXISelect = document.getElementById("playingXIMatch");
+  const tossSelect = document.getElementById("tossMatchId");
 
-if (!select && !quickSelect && !playingXISelect) return;
+if (!select && !quickSelect && !playingXISelect && !tossSelect) return;
 
   const { data, error } = await supabaseClient
     .from("matches")
@@ -1339,7 +1376,7 @@ if (!select && !quickSelect && !playingXISelect) return;
     return;
   }
 
-  const dropdowns = [select, quickSelect, playingXISelect].filter(Boolean);
+  const dropdowns = [select, quickSelect, playingXISelect, tossSelect].filter(Boolean);
 
   dropdowns.forEach(dropdown => {
     dropdown.innerHTML = '<option value="">मॅच निवडा</option>';
