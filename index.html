@@ -306,12 +306,17 @@ footer {
 </section>
 
   <section id="team">
-<h2>👥 आपली टीम | Our Team</h2>
-<div class="card">
-<strong>Aai Gavdevi Cricket Team Asalpada</strong>
-<p>आपल्या गावाचे प्रतिनिधित्व करणारा टेनिस क्रिकेट संघ.</p>
-<p class="small">खेळाडूंची नावे आणि फोटो लवकरच येथे जोडले जातील.</p>
-</div>
+  <h2>👥 आपली टीम | Our Team</h2>
+
+  <div class="card">
+    <strong>Aai Gavdevi Cricket Team Asalpada</strong>
+    <p>आपल्या गावाचे प्रतिनिधित्व करणारा टेनिस क्रिकेट संघ.</p>
+  </div>
+
+  <h3>🏏 आपल्या संघातील खेळाडू</h3>
+  <div id="publicTeamPlayers">
+    खेळाडूंची यादी लोड होत आहे...
+  </div>
 </section>
 
   <section id="schedule">
@@ -917,6 +922,37 @@ async function loadTeamPlayers() {
 
   if (error) {
     container.textContent = "Player List Error: " + error.message;
+    return;
+  }
+
+  container.replaceChildren();
+
+  if (!data || data.length === 0) {
+    container.textContent = "अजून खेळाडू जोडलेले नाहीत.";
+    return;
+  }
+
+  data.forEach((player, index) => {
+    const item = document.createElement("div");
+    item.className = "card";
+    item.textContent = `${index + 1}. ${player.player_name}`;
+    container.appendChild(item);
+  });
+}
+  async function loadPublicTeamPlayers() {
+  const container = document.getElementById("publicTeamPlayers");
+
+  if (!container) return;
+
+  const { data, error } = await supabaseClient
+    .from("team_players")
+    .select("id, player_name")
+    .eq("is_active", true)
+    .order("player_name", { ascending: true });
+
+  if (error) {
+    container.textContent = "खेळाडूंची यादी लोड झाली नाही.";
+    console.error(error);
     return;
   }
 
@@ -1802,7 +1838,8 @@ async function deleteScore(matchId) {
 }
 
 loadScoreboard();
-
+loadPublicTeamPlayers();
+  
 </script>
   
 </body>
