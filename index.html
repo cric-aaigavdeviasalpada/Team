@@ -387,7 +387,31 @@ footer {
   <button class="btn" onclick="saveMatch()">Add Match</button>
   <p id="matchMessage"></p>
 
-  <hr>
+<hr>
+
+<h3>👥 Our Team - Player Management</h3>
+<p>आपल्या टीममधील खेळाडूंची नावे येथे एकदा सेव्ह करा.</p>
+
+<input
+  id="newPlayerName"
+  type="text"
+  placeholder="खेळाडूचे पूर्ण नाव"
+  style="padding:10px;width:90%;margin:5px"
+>
+
+<button class="btn" onclick="addTeamPlayer()">
+  ➕ Add Player
+</button>
+
+<p id="playerMessage"></p>
+
+<h4>📋 आपल्या टीमची Player List</h4>
+
+<div id="teamPlayersList">
+  खेळाडूंची यादी लोड होत आहे...
+</div>
+
+<hr>
 
 <h3>📊 Live Scoreboard Preview</h3>
 
