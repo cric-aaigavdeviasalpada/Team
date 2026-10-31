@@ -536,6 +536,29 @@ footer {
   <option value="opponent">Opponent Team</option>
 </select>
 
+  <hr>
+
+<h4>🏏 Player Selection</h4>
+
+<label>Striker (फलंदाज 1)</label>
+<select id="strikerPlayer"
+  style="padding:10px;width:90%;margin:5px">
+  <option value="">Striker निवडा</option>
+</select>
+
+<label>Non-Striker (फलंदाज 2)</label>
+<select id="nonStrikerPlayer"
+  style="padding:10px;width:90%;margin:5px">
+  <option value="">Non-Striker निवडा</option>
+</select>
+
+<label>Bowler (गोलंदाज)</label>
+<select id="bowlerPlayer"
+  style="padding:10px;width:90%;margin:5px">
+  <option value="">Bowler निवडा</option>
+</select>
+
+<hr>
 
   <button type="button" class="btn" onclick="quickBallUpdate(0)">Dot Ball (0)</button>
   <button type="button" class="btn" onclick="quickBallUpdate(1)">+1</button>
@@ -1155,6 +1178,67 @@ function renderOpponentPlayers() {
   });
 }
 
+async function loadQuickPlayers() {
+  const matchId = document.getElementById("quickMatchId").value;
+  const battingTeam = document.getElementById("battingTeam").value;
+
+  const strikerSelect = document.getElementById("strikerPlayer");
+  const nonStrikerSelect = document.getElementById("nonStrikerPlayer");
+  const bowlerSelect = document.getElementById("bowlerPlayer");
+
+  if (!strikerSelect || !nonStrikerSelect || !bowlerSelect) return;
+
+  strikerSelect.innerHTML = '<option value="">Striker निवडा</option>';
+  nonStrikerSelect.innerHTML = '<option value="">Non-Striker निवडा</option>';
+  bowlerSelect.innerHTML = '<option value="">Bowler निवडा</option>';
+
+  if (!matchId) return;
+
+  const battingSide = battingTeam === "opponent" ? "opponent" : "our";
+  const bowlingSide = battingTeam === "opponent" ? "our" : "opponent";
+
+  const { data: players, error } = await supabaseClient
+    .from("match_players")
+    .select("id, player_name, team_side, batting_order")
+    .eq("match_id", Number(matchId))
+    .order("batting_order");
+
+  if (error) {
+    console.error("Player loading error:", error.message);
+    return;
+  }
+
+  const battingPlayers = (players || []).filter(
+    player => player.team_side === battingSide
+  );
+
+  const bowlingPlayers = (players || []).filter(
+    player => player.team_side === bowlingSide
+  );
+
+  battingPlayers.forEach(player => {
+    const option1 = document.createElement("option");
+    option1.value = player.id;
+    option1.textContent = player.player_name;
+    strikerSelect.appendChild(option1);
+
+    const option2 = document.createElement("option");
+    option2.value = player.id;
+    option2.textContent = player.player_name;
+    nonStrikerSelect.appendChild(option2);
+  });
+
+  bowlingPlayers.forEach(player => {
+    const option = document.createElement("option");
+    option.value = player.id;
+    option.textContent = player.player_name;
+    bowlerSelect.appendChild(option);
+  });
+}
+
+document.getElementById("quickMatchId").addEventListener("change", loadQuickPlayers);
+document.getElementById("battingTeam").addEventListener("change", loadQuickPlayers);
+  
 async function savePlayingXI() {
   const matchId = document.getElementById("playingXIMatch").value;
   const message = document.getElementById("playingXIMessage");
@@ -1880,6 +1964,20 @@ async function quickBallUpdate(runsOrWicket) {
 
   if (!matchId) {
     message.textContent = "कृपया आधी मॅच निवडा.";
+    return;
+  }
+
+    const strikerId = document.getElementById("strikerPlayer").value;
+  const nonStrikerId = document.getElementById("nonStrikerPlayer").value;
+  const bowlerId = document.getElementById("bowlerPlayer").value;
+
+  if (!strikerId || !nonStrikerId || !bowlerId) {
+    message.textContent = "कृपया Striker, Non-Striker आणि Bowler निवडा.";
+    return;
+  }
+
+  if (strikerId === nonStrikerId) {
+    message.textContent = "Striker आणि Non-Striker वेगळे निवडा.";
     return;
   }
 
