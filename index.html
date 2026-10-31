@@ -1510,7 +1510,7 @@ if (containers.length === 0) {
       opponent_wickets,
       opponent_overs,
       target,
-      matches(opponent, match_date, venue)
+      matches(opponent, match_date, venue, toss_winner, toss_decision, batting_first)
     `)
     .order("updated_at", { ascending: false });
 
@@ -1656,6 +1656,30 @@ const isAdmin = dashboard && !dashboard.hidden;
 </p>
         <p>📅 ${date}</p>
         <p>📍 ${match?.venue || ""}</p>
+        ${match?.toss_winner ? `
+  <div style="background:#252832;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #d69e36">
+    <strong>🪙 Toss Details</strong>
+
+    <p>
+      Toss Winner:
+      ${match.toss_winner === "our"
+        ? "Aai Gavdevi Asalpada"
+        : opponent}
+    </p>
+
+    <p>
+      Decision:
+      ${match.toss_decision === "bat" ? "Batting" : "Bowling"}
+    </p>
+
+    <p>
+      🏏 प्रथम Batting:
+      ${match.batting_first === "our"
+        ? "Aai Gavdevi Asalpada"
+        : opponent}
+    </p>
+  </div>
+` : ""}
 
         <hr>
 
