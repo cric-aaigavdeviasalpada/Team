@@ -1637,7 +1637,43 @@ const isAdmin = dashboard && !dashboard.hidden;
   const scoreboardHTML = data.map(score => {
     const match = score.matches;
     const opponent = match?.opponent || "Opponent Team";
+const ourBattingFirst = match?.batting_first !== "opponent";
 
+const firstTeamName = ourBattingFirst
+  ? "Aai Gavdevi Team"
+  : opponent;
+
+const firstTeamRuns = ourBattingFirst
+  ? score.team_runs
+  : (score.opponent_runs ?? 0);
+
+const firstTeamWickets = ourBattingFirst
+  ? score.wickets
+  : (score.opponent_wickets ?? 0);
+
+const firstTeamOvers = ourBattingFirst
+  ? score.overs
+  : (score.opponent_overs ?? 0);
+
+const firstTeamSide = ourBattingFirst ? "team" : "opponent";
+
+const secondTeamName = ourBattingFirst
+  ? opponent
+  : "Aai Gavdevi Team";
+
+const secondTeamRuns = ourBattingFirst
+  ? (score.opponent_runs ?? 0)
+  : score.team_runs;
+
+const secondTeamWickets = ourBattingFirst
+  ? (score.opponent_wickets ?? 0)
+  : score.wickets;
+
+const secondTeamOvers = ourBattingFirst
+  ? (score.opponent_overs ?? 0)
+  : score.overs;
+
+const secondTeamSide = ourBattingFirst ? "opponent" : "team";
     const date = match?.match_date
       ? new Date(match.match_date).toLocaleDateString("en-IN")
       : "";
