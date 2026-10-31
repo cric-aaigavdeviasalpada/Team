@@ -2106,9 +2106,22 @@ const newOvers = Math.floor(newBalls / 6) + "." + (newBalls % 6);
   event_label: eventLabel,
   legal_ball: legalBall,
   over_number: overNumber,
-  ball_number: ballNumber
-});
+  ball_number: ballNumber,
 
+  striker_id: Number(strikerId),
+  non_striker_id: Number(nonStrikerId),
+  bowler_id: Number(bowlerId),
+
+  is_wicket: isWicket,
+  batsman_runs: extra
+    ? (extra.type === "no_ball" ? customRuns : 0)
+    : (isWicket ? 0 : runs),
+  extra_runs: extra
+    ? (extra.type === "wide" ? runs : 1)
+    : 0,
+  extra_type: extra ? extra.type : null
+});
+  
   if (eventError) {
     message.textContent =
       "स्कोअर अपडेट झाला; पण बॉलचा इतिहास सेव्ह झाला नाही: " +
