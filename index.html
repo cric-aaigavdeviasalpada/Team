@@ -928,7 +928,7 @@ async function addTeamPlayer() {
 
   await loadTeamPlayers();
 }
-
+  
 async function loadTeamPlayers() {
   const container = document.getElementById("teamPlayersList");
 
@@ -957,10 +957,43 @@ async function loadTeamPlayers() {
   data.forEach((player, index) => {
     const item = document.createElement("div");
     item.className = "card";
-    item.textContent = `${index + 1}. ${player.player_name}`;
+    item.style.display = "flex";
+    item.style.justifyContent = "space-between";
+    item.style.alignItems = "center";
+
+    const name = document.createElement("span");
+    name.textContent = `${index + 1}. ${player.player_name}`;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "btn";
+    deleteButton.textContent = "🗑️ Delete";
+
+    deleteButton.onclick = async function() {
+      if (!confirm(player.player_name + " याला Player List मधून काढायचे आहे का?")) {
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from("team_players")
+        .update({ is_active: false })
+        .eq("id", player.id);
+
+      if (error) {
+        alert("Delete Error: " + error.message);
+        return;
+      }
+
+      alert("खेळाडू Player List मधून काढला आहे.");
+      await loadTeamPlayers();
+      await loadPublicTeamPlayers();
+    };
+
+    item.appendChild(name);
+    item.appendChild(deleteButton);
     container.appendChild(item);
   });
 }
+  
   async function loadPublicTeamPlayers() {
   const container = document.getElementById("publicTeamPlayers");
 
@@ -1042,39 +1075,17 @@ async function loadPlayingXISetup() {
     ourContainer.appendChild(label);
   });
 
+   playingXIOpponentNames = Array.from(
+    { length: 11 },
+    (_, index) => `Opponent Player ${index + 1}`
+  );
+
   opponentContainer.innerHTML = `
-    <h4>🆚 Opponent Team - खेळाडूंची नावे</h4>
-    <input id="opponentPlayerName" type="text"
-      placeholder="Opponent खेळाडूचे नाव"
-      style="padding:10px;width:70%;margin:5px">
-    <button type="button" class="btn" id="addOpponentPlayerBtn">
-      ➕ Add
-    </button>
+    <h4>🆚 Opponent Team - 11 Players</h4>
     <div id="opponentPlayerList"></div>
   `;
 
-  document.getElementById("addOpponentPlayerBtn").onclick = function() {
-    const input = document.getElementById("opponentPlayerName");
-    const name = input.value.trim();
-
-    if (!name) return;
-
-    if (playingXIOpponentNames.length >= 11) {
-      message.textContent = "Opponent टीममध्ये जास्तीत जास्त 11 खेळाडू जोडा.";
-      return;
-    }
-
-    if (playingXIOpponentNames.includes(name)) {
-      message.textContent = "हे नाव आधीच जोडले आहे.";
-      return;
-    }
-
-    playingXIOpponentNames.push(name);
-    input.value = "";
-    message.textContent = "";
-
-    renderOpponentPlayers();
-  };
+  renderOpponentPlayers();
 
   message.textContent = "दोन्ही टीमचे खेळाडू निवडा.";
 }
