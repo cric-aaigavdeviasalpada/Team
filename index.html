@@ -1719,22 +1719,22 @@ const secondTeamSide = ourBattingFirst ? "opponent" : "team";
 
         <hr>
 
-        <h4>🏏 Aai Gavdevi Team</h4>
-        <h2>${score.team_runs}/${score.wickets}</h2>
-        <p>Overs: ${score.overs}</p>
-        <div style="background:#252832;padding:8px;margin:8px 0;border-radius:8px">
+        <h4>🏏 ${firstTeamName}</h4>
+<h2>${firstTeamRuns}/${firstTeamWickets}</h2>
+<p>Overs: ${firstTeamOvers}</p>
+<div style="background:#252832;padding:8px;margin:8px 0;border-radius:8px">
   <strong>📊 Over Summary:</strong>
-  ${getOverSummary(score.match_id, "team")}
+  ${getOverSummary(score.match_id, firstTeamSide)}
 </div>
 
-        <hr>
+<hr>
 
-        <h4>🏏 ${opponent}</h4>
-        <h2>${score.opponent_runs ?? 0}/${score.opponent_wickets ?? 0}</h2>
-        <p>Overs: ${score.opponent_overs ?? 0}</p>
-        <div style="background:#252832;padding:8px;margin:8px 0;border-radius:8px">
+<h4>🏏 ${secondTeamName}</h4>
+<h2>${secondTeamRuns}/${secondTeamWickets}</h2>
+<p>Overs: ${secondTeamOvers}</p>
+<div style="background:#252832;padding:8px;margin:8px 0;border-radius:8px">
   <strong>📊 Over Summary:</strong>
-  ${getOverSummary(score.match_id, "opponent")}
+  ${getOverSummary(score.match_id, secondTeamSide)}
 </div>
 
         ${score.target != null
