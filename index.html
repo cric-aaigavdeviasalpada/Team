@@ -303,6 +303,11 @@ footer {
       स्कोअर लोड होत आहे...
     </div>
   </div>
+  <hr>
+<h2>📋 Complete Match Scorecard</h2>
+<div id="battingScorecardContainer">
+  <p>Scorecard लोड होत आहे...</p>
+</div>  
 </section>
 
   <section id="team">
@@ -1618,12 +1623,21 @@ if (containers.length === 0) {
 
 const { data: ballEvents, error: ballEventsError } = await supabaseClient
   .from("ball_events")
-  .select("match_id, batting_team, runs, event_type, event_label, legal_ball, over_number, created_at")
+  .select("match_id, batting_team, runs, event_type, event_label, legal_ball, over_number, created_at, striker_id, non_striker_id, bowler_id, batsman_runs, extra_runs, extra_type, is_wicket")
   .in("match_id", matchIds)
   .order("created_at", { ascending: true });
 
 if (ballEventsError) {
   console.error("Ball history error:", ballEventsError.message);
+}
+  const { data: matchPlayers, error: matchPlayersError } = await supabaseClient
+  .from("match_players")
+  .select("id, match_id, player_name, team_side, batting_order")
+  .in("match_id", matchIds)
+  .order("batting_order", { ascending: true });
+
+if (matchPlayersError) {
+  console.error("Match players error:", matchPlayersError.message);
 }
 
 const getChaseSummary = (score) => {
@@ -1716,6 +1730,144 @@ const getOverSummary = (matchId, battingTeam) => {
     </p>
   `).join("");
 };
+  const getBattingScorecard = (matchId, teamSide, teamName) => {
+  const players = (matchPlayers || []).filter(player =>
+    Number(player.match_id) === Number(matchId) &&
+    player.team_side === teamSide
+  );
+
+  const events = (ballEvents || []).filter(event =>
+    Number(event.match_id) === Number(matchId) &&
+    event.batting_team === teamSide
+  );
+
+  if (players.length === 0) return "";
+
+  const rows = players.map(player => {
+    const playerEvents = events.filter(event =>
+      Number(event.striker_id) === Number(player.id)
+    );
+
+    const runs = playerEvents.reduce((sum, event) =>
+      sum + Number(event.batsman_runs || 0), 0
+    );
+
+    const balls = playerEvents.filter(event =>
+      event.legal_ball === true || event.extra_type === "no_ball"
+    ).length;
+
+    const fours = playerEvents.filter(event =>
+      Number(event.batsman_runs) === 4
+    ).length;
+
+    const sixes = playerEvents.filter(event =>
+      Number(event.batsman_runs) === 6
+    ).length;
+
+    const strikeRate = balls > 0
+      ? ((runs / balls) * 100).toFixed(2)
+      : "0.00";
+
+    return `
+      <tr>
+        <td>${player.player_name}</td>
+        <td>${runs}</td>
+        <td>${balls}</td>
+        <td>${fours}</td>
+        <td>${sixes}</td>
+        <td>${strikeRate}</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div style="overflow-x:auto;margin:12px 0">
+      <h4>🏏 ${teamName} – Batting</h4>
+      <table style="width:100%;border-collapse:collapse;min-width:420px;text-align:center">
+        <thead>
+          <tr style="background:#30343d">
+            <th style="padding:8px">Batter</th>
+            <th>R</th>
+            <th>B</th>
+            <th>4s</th>
+            <th>6s</th>
+            <th>SR</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+};
+
+  const getBowlingScorecard = (matchId, bowlingSide, teamName) => {
+  const players = (matchPlayers || []).filter(player =>
+    Number(player.match_id) === Number(matchId) &&
+    player.team_side === bowlingSide
+  );
+
+  const events = (ballEvents || []).filter(event =>
+    Number(event.match_id) === Number(matchId) &&
+    event.batting_team !== bowlingSide &&
+    event.bowler_id
+  );
+
+  if (players.length === 0) return "";
+
+  const rows = players.map(player => {
+    const playerEvents = events.filter(event =>
+      Number(event.bowler_id) === Number(player.id)
+    );
+
+    const legalBalls = playerEvents.filter(event =>
+      event.legal_ball === true
+    ).length;
+
+    const overs = Math.floor(legalBalls / 6) +
+      "." + (legalBalls % 6);
+
+    const runs = playerEvents.reduce((sum, event) =>
+      sum + Number(event.runs || 0), 0
+    );
+
+    const wickets = playerEvents.filter(event =>
+      event.is_wicket === true
+    ).length;
+
+    const economy = legalBalls > 0
+      ? (runs / (legalBalls / 6)).toFixed(2)
+      : "0.00";
+
+    return `
+      <tr>
+        <td>${player.player_name}</td>
+        <td>${overs}</td>
+        <td>${runs}</td>
+        <td>${wickets}</td>
+        <td>${economy}</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div style="overflow-x:auto;margin:12px 0">
+      <h4>🎯 ${teamName} – Bowling</h4>
+      <table style="width:100%;border-collapse:collapse;min-width:350px;text-align:center">
+        <thead>
+          <tr style="background:#30343d">
+            <th style="padding:8px">Bowler</th>
+            <th>O</th>
+            <th>R</th>
+            <th>W</th>
+            <th>Econ</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+};
+  
 const isAdmin = dashboard && !dashboard.hidden;
   
   const scoreboardHTML = data.map(score => {
@@ -1835,7 +1987,46 @@ const secondTeamSide = ourBattingFirst ? "opponent" : "team";
       </div>
     `;
   }).join("");
+const scorecardContainer = document.getElementById("battingScorecardContainer");
 
+if (scorecardContainer) {
+  scorecardContainer.innerHTML = data.map(score => {
+    const match = matches.find(m =>
+      Number(m.id) === Number(score.match_id)
+    );
+
+    const opponent = match?.opponent || "Opponent";
+
+    const ourFirst = match?.batting_first !== "opponent";
+
+    const firstSide = ourFirst ? "our" : "opponent";
+    const secondSide = ourFirst ? "opponent" : "our";
+
+    const firstName = ourFirst
+      ? "Aai Gavdevi Asalpada"
+      : opponent;
+
+    const secondName = ourFirst
+      ? opponent
+      : "Aai Gavdevi Asalpada";
+
+    return `
+      <div class="card">
+        <h3>📋 ${firstName} vs ${secondName}</h3>
+
+       ${getBattingScorecard(score.match_id, firstSide, firstName)}
+
+${getBowlingScorecard(score.match_id, secondSide, secondName)}
+
+<hr>
+
+${getBattingScorecard(score.match_id, secondSide, secondName)}
+
+${getBowlingScorecard(score.match_id, firstSide, firstName)}
+      </div>
+    `;
+  }).join("");
+}
 containers.forEach(container => {
   container.innerHTML = scoreboardHTML;
 });
