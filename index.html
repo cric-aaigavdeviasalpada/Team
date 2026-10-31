@@ -1744,7 +1744,12 @@ const getOverSummary = (matchId, battingTeam) => {
 
   if (players.length === 0) return "";
 
-  const rows = players.map(player => {
+  const rows = players.filter(player =>
+  events.some(event =>
+    Number(event.striker_id) === Number(player.id) ||
+    Number(event.non_striker_id) === Number(player.id)
+  )
+).map(player => {
     const playerEvents = events.filter(event =>
       Number(event.striker_id) === Number(player.id)
     );
@@ -1815,7 +1820,11 @@ const getOverSummary = (matchId, battingTeam) => {
 
   if (players.length === 0) return "";
 
-  const rows = players.map(player => {
+  const rows = players.filter(player =>
+  events.some(event =>
+    Number(event.bowler_id) === Number(player.id)
+  )
+).map(player => {
     const playerEvents = events.filter(event =>
       Number(event.bowler_id) === Number(player.id)
     );
