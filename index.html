@@ -415,7 +415,29 @@ footer {
 <div id="teamPlayersList">
   खेळाडूंची यादी लोड होत आहे...
 </div>
+<hr>
+<h3>🏏 Match Playing XI Setup</h3>
 
+<p>मॅच निवडून आपल्या टीमची Playing XI ठरवा.</p>
+
+<select id="playingXIMatch"
+  style="padding:10px;width:90%;margin:5px">
+  <option value="">मॅच निवडा</option>
+</select>
+
+<button class="btn" onclick="loadPlayingXISetup()">
+  Load Players
+</button>
+
+<div id="playingXIOurPlayers"></div>
+<div id="playingXIOpponentPlayers"></div>
+
+<button class="btn" onclick="savePlayingXI()">
+  💾 Save Playing XI
+</button>
+
+<p id="playingXIMessage"></p>
+<hr>
 <hr>
 
 <h3>📊 Live Scoreboard Preview</h3>
@@ -970,6 +992,178 @@ async function loadTeamPlayers() {
     container.appendChild(item);
   });
 }
+
+  let playingXIOpponentNames = [];
+
+async function loadPlayingXISetup() {
+  const matchSelect = document.getElementById("playingXIMatch");
+  const ourContainer = document.getElementById("playingXIOurPlayers");
+  const opponentContainer = document.getElementById("playingXIOpponentPlayers");
+  const message = document.getElementById("playingXIMessage");
+
+  message.textContent = "Players लोड होत आहेत...";
+  ourContainer.replaceChildren();
+  opponentContainer.replaceChildren();
+  playingXIOpponentNames = [];
+
+  const matchId = matchSelect.value;
+
+  if (!matchId) {
+    message.textContent = "कृपया आधी मॅच निवडा.";
+    return;
+  }
+
+  const { data: players, error } = await supabaseClient
+    .from("team_players")
+    .select("id, player_name")
+    .eq("is_active", true)
+    .order("player_name");
+
+  if (error) {
+    message.textContent = "Error: " + error.message;
+    return;
+  }
+
+  ourContainer.innerHTML = "<h4>🏏 आपली टीम - Playing XI निवडा</h4>";
+
+  players.forEach(player => {
+    const label = document.createElement("label");
+    label.style.display = "block";
+    label.style.padding = "7px";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "ourPlayingXI";
+    checkbox.value = player.id;
+    checkbox.dataset.name = player.player_name;
+
+    label.appendChild(checkbox);
+    label.append(" " + player.player_name);
+    ourContainer.appendChild(label);
+  });
+
+  opponentContainer.innerHTML = `
+    <h4>🆚 Opponent Team - खेळाडूंची नावे</h4>
+    <input id="opponentPlayerName" type="text"
+      placeholder="Opponent खेळाडूचे नाव"
+      style="padding:10px;width:70%;margin:5px">
+    <button type="button" class="btn" id="addOpponentPlayerBtn">
+      ➕ Add
+    </button>
+    <div id="opponentPlayerList"></div>
+  `;
+
+  document.getElementById("addOpponentPlayerBtn").onclick = function() {
+    const input = document.getElementById("opponentPlayerName");
+    const name = input.value.trim();
+
+    if (!name) return;
+
+    if (playingXIOpponentNames.length >= 11) {
+      message.textContent = "Opponent टीममध्ये जास्तीत जास्त 11 खेळाडू जोडा.";
+      return;
+    }
+
+    if (playingXIOpponentNames.includes(name)) {
+      message.textContent = "हे नाव आधीच जोडले आहे.";
+      return;
+    }
+
+    playingXIOpponentNames.push(name);
+    input.value = "";
+    message.textContent = "";
+
+    renderOpponentPlayers();
+  };
+
+  message.textContent = "दोन्ही टीमचे खेळाडू निवडा.";
+}
+
+function renderOpponentPlayers() {
+  const list = document.getElementById("opponentPlayerList");
+  if (!list) return;
+
+  list.replaceChildren();
+
+  playingXIOpponentNames.forEach((name, index) => {
+    const item = document.createElement("div");
+    item.style.padding = "6px";
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.textContent = "❌";
+    removeButton.onclick = function() {
+      playingXIOpponentNames.splice(index, 1);
+      renderOpponentPlayers();
+    };
+
+    item.textContent = (index + 1) + ". " + name + " ";
+    item.appendChild(removeButton);
+    list.appendChild(item);
+  });
+}
+
+async function savePlayingXI() {
+  const matchId = document.getElementById("playingXIMatch").value;
+  const message = document.getElementById("playingXIMessage");
+
+  if (!matchId) {
+    message.textContent = "कृपया मॅच निवडा.";
+    return;
+  }
+
+  const selectedPlayers = Array.from(
+    document.querySelectorAll(".ourPlayingXI:checked")
+  );
+
+  if (selectedPlayers.length !== 11 || playingXIOpponentNames.length !== 11) {
+    message.textContent = "दोन्ही टीमचे नेमके 11 खेळाडू निवडा.";
+    return;
+  }
+
+  const matchPlayers = [];
+
+  selectedPlayers.forEach((checkbox, index) => {
+    matchPlayers.push({
+      match_id: Number(matchId),
+      player_name: checkbox.dataset.name,
+      team_side: "our",
+      batting_order: index + 1
+    });
+  });
+
+  playingXIOpponentNames.forEach((name, index) => {
+    matchPlayers.push({
+      match_id: Number(matchId),
+      player_name: name,
+      team_side: "opponent",
+      batting_order: index + 1
+    });
+  });
+
+  message.textContent = "Playing XI सेव्ह होत आहे...";
+
+  const { error: deleteError } = await supabaseClient
+    .from("match_players")
+    .delete()
+    .eq("match_id", Number(matchId));
+
+  if (deleteError) {
+    message.textContent = "Error: " + deleteError.message;
+    return;
+  }
+
+  const { error: insertError } = await supabaseClient
+    .from("match_players")
+    .insert(matchPlayers);
+
+  if (insertError) {
+    message.textContent = "Error: " + insertError.message;
+    return;
+  }
+
+  message.textContent = "✅ Playing XI यशस्वीरीत्या सेव्ह झाली!";
+}
   
 async function saveMatch() {
   const opponent = document.getElementById("opponent").value.trim();
@@ -1078,9 +1272,10 @@ container.innerHTML = data.map(match => `
  
 async function loadScoreMatchOptions() {
   const select = document.getElementById("scoreMatchId");
-  const quickSelect = document.getElementById("quickMatchId");
+const quickSelect = document.getElementById("quickMatchId");
+const playingXISelect = document.getElementById("playingXIMatch");
 
-  if (!select && !quickSelect) return;
+if (!select && !quickSelect && !playingXISelect) return;
 
   const { data, error } = await supabaseClient
     .from("matches")
@@ -1092,7 +1287,7 @@ async function loadScoreMatchOptions() {
     return;
   }
 
-  const dropdowns = [select, quickSelect].filter(Boolean);
+  const dropdowns = [select, quickSelect, playingXISelect].filter(Boolean);
 
   dropdowns.forEach(dropdown => {
     dropdown.innerHTML = '<option value="">मॅच निवडा</option>';
