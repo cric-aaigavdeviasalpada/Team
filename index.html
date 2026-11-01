@@ -1423,25 +1423,51 @@ container.innerHTML = data.map(match => `
 `).join("");
 }
 
-  async function deleteMatch(matchId) {
+ 
+async function deleteMatch(matchId) {
+
   const confirmDelete = confirm(
     "ही मॅच कायमची Delete करायची आहे का?"
   );
 
   if (!confirmDelete) return;
 
-  const { error } = await supabaseClient
+  // Step 1: Delete Ball Events
+
+  const { data: deletedEvents, error: ballError } =
+  await supabaseClient
+    .from("ball_events")
+    .delete()
+    .eq("match_id", matchId)
+    .select("id");
+
+if (ballError) {
+  alert("Ball Events Delete Error: " + ballError.message);
+  return;
+}
+
+console.log("Deleted Ball Events:", deletedEvents);
+
+if (!deletedEvents || deletedEvents.length === 0) {
+  alert("Ball Events Delete झाले नाहीत. Admin permission तपासावी लागेल.");
+  return;
+}
+
+  // Step 2: Delete Match
+  const { error: matchError } = await supabaseClient
     .from("matches")
     .delete()
     .eq("id", matchId);
 
-  if (error) {
-    alert("मॅच Delete करता आली नाही: " + error.message);
+  if (matchError) {
+    alert("मॅच Delete करता आली नाही: " + matchError.message);
     return;
   }
 
   alert("मॅच यशस्वीरीत्या Delete झाली!");
+
   await loadMatches();
+  await loadScoreboard();
 }
 
  
