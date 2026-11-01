@@ -1940,6 +1940,18 @@ const firstTeamOvers = ourBattingFirst
 
 const firstTeamSide = ourBattingFirst ? "our" : "opponent";
 
+    const latestMatchEvent = (ballEvents || [])
+  .filter(event =>
+    Number(event.match_id) === Number(score.match_id)
+  )
+  .sort((a, b) =>
+    new Date(b.created_at) - new Date(a.created_at)
+  )[0];
+
+const currentBattingSide = latestMatchEvent
+  ? latestMatchEvent.batting_team
+  : firstTeamSide;
+
 const secondTeamName = ourBattingFirst
   ? opponent
   : "Aai Gavdevi Team";
