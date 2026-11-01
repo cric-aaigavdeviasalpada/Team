@@ -2293,6 +2293,23 @@ async function quickBallUpdate(runsOrWicket) {
     return;
   }
 
+  const { data: matchDetails, error: matchDetailsError } =
+  await supabaseClient
+    .from("matches")
+    .select("batting_first")
+    .eq("id", Number(matchId))
+    .maybeSingle();
+
+if (matchDetailsError || !matchDetails) {
+  message.textContent = "Match Details मिळाले नाहीत.";
+  return;
+}
+
+const firstBattingTeam =
+  matchDetails.batting_first === "opponent"
+    ? "opponent"
+    : "team";
+  
   const currentBalls = parseCricketOvers(score[oversColumn]);
 
   if (currentBalls === null) {
@@ -2300,10 +2317,15 @@ async function quickBallUpdate(runsOrWicket) {
     return;
   }
 
-const newBalls = currentBalls + (legalBall ? 1 : 0);
-
 const totalOvers = Number(score.total_overs || 5);
 const totalBalls = totalOvers * 6;
+
+if (currentBalls >= totalBalls) {
+  message.textContent = "⛔ या Innings चे ठरलेले Overs पूर्ण झाले आहेत. आता पुढचा Ball टाकता येणार नाही.";
+  return;
+}
+
+const newBalls = currentBalls + (legalBall ? 1 : 0);
 const ballsRemaining = Math.max(0, totalBalls - newBalls);
 
 const target = Number(score.target || 0);
@@ -2317,16 +2339,30 @@ const requiredRunRate = ballsRemaining > 0
 
 
 const newOvers = Math.floor(newBalls / 6) + "." + (newBalls % 6);
-  const updates = {
-    [runsColumn]: Number(score[runsColumn] || 0) + runs,
-    [wicketsColumn]: Math.min(
-      10,
-      Number(score[wicketsColumn] || 0) + (isWicket ? 1 : 0)
-    ),
-    [oversColumn]: Number(newOvers),
-    updated_at: new Date().toISOString()
-  };
+  const newWickets =
+  Number(score[wicketsColumn] || 0) + (isWicket ? 1 : 0);
 
+const inningsComplete =
+  newBalls >= totalBalls || newWickets >= 10;
+
+const firstInningsComplete =
+  battingTeam === firstBattingTeam && inningsComplete;
+
+const automaticTarget = firstInningsComplete
+  ? battingRuns + 1
+  : score.target;
+
+  const updates = {
+  [runsColumn]: Number(score[runsColumn] || 0) + runs,
+  [wicketsColumn]: Math.min(
+    10,
+    Number(score[wicketsColumn] || 0) + (isWicket ? 1 : 0)
+  ),
+  [oversColumn]: Number(newOvers),
+  target: automaticTarget,
+  updated_at: new Date().toISOString()
+};
+  
   const { error: updateError } = await supabaseClient
     .from("scoreboards")
     .update(updates)
@@ -2393,6 +2429,29 @@ if (target > 0) {
   message.textContent += chaseMessage;
 }
 
+ // Automatic Strike Rotation
+const strikerSelect = document.getElementById("strikerPlayer");
+const nonStrikerSelect = document.getElementById("nonStrikerPlayer");
+
+let shouldSwapStrike =
+  legalBall && (runs === 1 || runs === 3);
+
+// 6 वा बॉल पूर्ण झाल्यावर Strike बदलतो
+if (legalBall && newBalls % 6 === 0) {
+  shouldSwapStrike = !shouldSwapStrike;
+}
+
+if (
+  shouldSwapStrike &&
+  strikerSelect &&
+  nonStrikerSelect
+) {
+  const oldStriker = strikerSelect.value;
+
+  strikerSelect.value = nonStrikerSelect.value;
+  nonStrikerSelect.value = oldStriker;
+} 
+  
   await loadScoreboard();
 }
 async function undoLastBall() {
