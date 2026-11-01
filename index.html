@@ -1715,10 +1715,10 @@ const getOverSummary = (matchId, battingTeam) => {
     overGroups[event.over_number].push(label);
   });
 
-  const overNumbers = Object.keys(overGroups)
-    .map(Number)
-    .sort((a, b) => a - b)
-    .slice(-2);
+const overNumbers = Object.keys(overGroups)
+  .map(Number)
+  .sort((a, b) => a - b)
+  .slice(-1);
 
   return overNumbers.map(over => `
     <p style="margin:5px 0">
