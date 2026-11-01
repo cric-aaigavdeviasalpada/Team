@@ -2030,6 +2030,13 @@ ${score.target != null
   ? `<p>🎯 Target: ${score.target}</p>`
   : ""}
 
+${currentBattingSide ? `
+  <div style="background:#252832;padding:10px;border-radius:8px;margin:10px 0">
+    <h4>📊 Current Over Summary</h4>
+    ${getOverSummary(score.match_id, currentBattingSide)}
+  </div>
+` : ""}
+
 ${getChaseSummary(score)}
 
 ${isAdmin ? `
