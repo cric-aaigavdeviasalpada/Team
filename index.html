@@ -2013,6 +2013,12 @@ ${match?.toss_winner ? `
     <h4>🏏 ${firstTeamName}</h4>
     <h2>${firstTeamRuns}/${firstTeamWickets}</h2>
     <p>Overs: ${firstTeamOvers}</p>
+    ${currentBattingSide === firstTeamSide ? `
+  <div style="margin-top:10px;padding:8px;background:#30343d;border-radius:8px">
+    <strong>📊 Over Summary</strong>
+    ${getOverSummary(score.match_id, currentBattingSide)}
+  </div>
+` : ""}
     <small>पहिली Innings</small>
   </div>
 
@@ -2021,6 +2027,12 @@ ${match?.toss_winner ? `
     <h4>🏏 ${secondTeamName}</h4>
     <h2>${secondTeamRuns}/${secondTeamWickets}</h2>
     <p>Overs: ${secondTeamOvers}</p>
+    ${currentBattingSide === secondTeamSide ? `
+  <div style="margin-top:10px;padding:8px;background:#30343d;border-radius:8px">
+    <strong>📊 Over Summary</strong>
+    ${getOverSummary(score.match_id, currentBattingSide)}
+  </div>
+` : ""}
     <small>दुसरी Innings</small>
   </div>
 
@@ -2030,12 +2042,7 @@ ${score.target != null
   ? `<p>🎯 Target: ${score.target}</p>`
   : ""}
 
-${currentBattingSide ? `
-  <div style="background:#252832;padding:10px;border-radius:8px;margin:10px 0">
-    <h4>📊 Current Over Summary</h4>
-    ${getOverSummary(score.match_id, currentBattingSide)}
-  </div>
-` : ""}
+
 
 ${getChaseSummary(score)}
 
