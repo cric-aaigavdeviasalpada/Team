@@ -1733,10 +1733,12 @@ const overNumbers = Object.keys(overGroups)
     player.team_side === teamSide
   );
 
-  const events = (ballEvents || []).filter(event =>
+  const storedTeamSide = teamSide === "our" ? "team" : teamSide;
+
+const events = (ballEvents || []).filter(event =>
     Number(event.match_id) === Number(matchId) &&
-    event.batting_team === teamSide
-  );
+    event.batting_team === storedTeamSide
+);
 
   if (players.length === 0) return "";
 
