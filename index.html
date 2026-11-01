@@ -1982,7 +1982,11 @@ const firstTeamSide = ourBattingFirst ? "our" : "opponent";
   )[0];
 
 const currentBattingSide = latestMatchEvent
-  ? latestMatchEvent.batting_team
+  ? (
+      latestMatchEvent.batting_team === "team"
+        ? "our"
+        : latestMatchEvent.batting_team
+    )
   : firstTeamSide;
 
 const secondTeamName = ourBattingFirst
