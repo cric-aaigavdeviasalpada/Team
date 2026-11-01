@@ -2066,7 +2066,25 @@ ${isAdmin ? `
 });
 }
 
+async function adminLogout() {
+  const { error } = await supabaseClient.auth.signOut();
 
+  if (error) {
+    alert("Logout करताना Error: " + error.message);
+    return;
+  }
+
+  const dashboard = document.getElementById("adminDashboard");
+
+  if (dashboard) {
+    dashboard.hidden = true;
+    dashboard.style.display = "none";
+  }
+
+  alert("Admin Logout Successful!");
+
+  location.reload();
+}
 
 async function quickUpdateScore() {
   const matchId = document.getElementById("quickMatchId").value.trim();
