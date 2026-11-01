@@ -1692,14 +1692,19 @@ const getChaseSummary = (score) => {
 };
   
 const getOverSummary = (matchId, battingTeam) => {
+
+  const storedTeamSide =
+    battingTeam === "our" ? "team" : battingTeam;
+
   const events = (ballEvents || []).filter(event =>
-    event.match_id === matchId &&
-    event.batting_team === battingTeam
+    Number(event.match_id) === Number(matchId) &&
+    event.batting_team === storedTeamSide
   );
 
   const overGroups = {};
 
   events.forEach(event => {
+
     if (!overGroups[event.over_number]) {
       overGroups[event.over_number] = [];
     }
@@ -1715,10 +1720,10 @@ const getOverSummary = (matchId, battingTeam) => {
     overGroups[event.over_number].push(label);
   });
 
-const overNumbers = Object.keys(overGroups)
-  .map(Number)
-  .sort((a, b) => a - b)
-  .slice(-1);
+  const overNumbers = Object.keys(overGroups)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .slice(-1);
 
   return overNumbers.map(over => `
     <p style="margin:5px 0">
