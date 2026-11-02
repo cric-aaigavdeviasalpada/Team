@@ -2604,20 +2604,6 @@ if (lastWicketEvent && lastWicketEvent.dismissed_player_id) {
     return;
   }
 }
-}
-
-if (
-  lastWicketEvent &&
-  lastWicketEvent.is_wicket === true &&
-  (
-    Number(strikerId) === Number(lastWicketEvent.striker_id) ||
-    Number(nonStrikerId) === Number(lastWicketEvent.striker_id)
-  )
-) {
-  message.textContent =
-    "⛔ Wicket पडला आहे! कृपया नवीन Batsman निवडा.";
-  return;
-}
   
 const newBalls = currentBalls + (legalBall ? 1 : 0);
 const ballsRemaining = Math.max(0, totalBalls - newBalls);
