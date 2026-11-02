@@ -1773,6 +1773,40 @@ const events = (ballEvents || []).filter(event =>
 
   if (players.length === 0) return "";
 
+    // सध्याचा Striker शोधणे
+let currentStrikerId = null;
+
+const latestEvent = [...events].sort((a, b) => {
+  const dateCompare =
+    new Date(b.created_at) - new Date(a.created_at);
+
+  return dateCompare !== 0
+    ? dateCompare
+    : Number(b.id) - Number(a.id);
+})[0];
+
+if (latestEvent) {
+  currentStrikerId = latestEvent.striker_id;
+
+  let shouldSwap =
+    latestEvent.legal_ball === true &&
+    (
+      Number(latestEvent.runs) === 1 ||
+      Number(latestEvent.runs) === 3
+    );
+
+  if (
+    latestEvent.legal_ball === true &&
+    Number(latestEvent.ball_number) === 6
+  ) {
+    shouldSwap = !shouldSwap;
+  }
+
+  if (shouldSwap) {
+    currentStrikerId = latestEvent.non_striker_id;
+  }
+}
+    
   const rows = players.filter(player =>
   events.some(event =>
     Number(event.striker_id) === Number(player.id) ||
@@ -1805,7 +1839,10 @@ const events = (ballEvents || []).filter(event =>
 
     return `
       <tr>
-        <td>${player.player_name}</td>
+        <td>
+  ${player.player_name}
+  ${Number(player.id) === Number(currentStrikerId) ? " 🏏" : ""}
+</td>
         <td>${runs}</td>
         <td>${balls}</td>
         <td>${fours}</td>
@@ -2361,7 +2398,36 @@ if (currentBalls >= totalBalls) {
   message.textContent = "⛔ या Innings चे ठरलेले Overs पूर्ण झाले आहेत. आता पुढचा Ball टाकता येणार नाही.";
   return;
 }
+  
+// Over पूर्ण झाल्यावर नवीन Bowler निवडणे आवश्यक
+if (currentBalls > 0 && currentBalls % 6 === 0) {
 
+  const { data: lastLegalBall, error: lastBallError } =
+    await supabaseClient
+      .from("ball_events")
+      .select("bowler_id")
+      .eq("match_id", Number(matchId))
+      .eq("batting_team", battingTeam)
+      .eq("legal_ball", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+  if (lastBallError) {
+    message.textContent = "Bowler तपासताना Error: " + lastBallError.message;
+    return;
+  }
+
+  if (
+    lastLegalBall &&
+    Number(bowlerId) === Number(lastLegalBall.bowler_id)
+  ) {
+    message.textContent =
+      "⛔ Over पूर्ण झाला! कृपया नवीन Bowler निवडा.";
+    return;
+  }
+}
+  
 const newBalls = currentBalls + (legalBall ? 1 : 0);
 const ballsRemaining = Math.max(0, totalBalls - newBalls);
 
