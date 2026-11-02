@@ -2930,8 +2930,14 @@ async function deleteScore(matchId) {
   await loadScoreboard();
 }
 
+// Website Auto Refresh - Every 10 Seconds
 loadScoreboard();
 loadPublicTeamPlayers();
+
+setInterval(() => {
+  loadScoreboard();
+  loadPublicTeamPlayers();
+}, 10000);
   
 </script>
   
