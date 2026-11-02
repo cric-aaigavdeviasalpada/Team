@@ -561,6 +561,48 @@ footer {
   <option value="">Bowler निवडा</option>
 </select>
 
+  <!-- WICKET DETAILS POPUP -->
+<div id="wicketPopup"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;justify-content:center;align-items:center;padding:15px">
+
+  <div style="background:#252832;padding:20px;border-radius:12px;width:100%;max-width:400px;border:1px solid #d69e36">
+
+    <h3 style="color:#f1c40f;text-align:center">🏏 Wicket Details</h3>
+
+    <label>How Out?</label>
+    <select id="dismissalType"
+      onchange="toggleRunOutPlayer()"
+      style="width:100%;padding:12px;margin:10px 0">
+      <option value="">Select Dismissal</option>
+      <option value="bowled">Bowled</option>
+      <option value="caught">Caught</option>
+      <option value="lbw">LBW</option>
+      <option value="run_out">Run Out</option>
+      <option value="stumped">Stumped</option>
+      <option value="hit_wicket">Hit Wicket</option>
+    </select>
+
+    <div id="runOutPlayerBox" style="display:none;margin-top:10px">
+      <label>Who is Out?</label>
+      <select id="runOutPlayer"
+        style="width:100%;padding:12px;margin:8px 0">
+        <option value="">Select Batsman</option>
+      </select>
+    </div>
+
+    <button onclick="confirmWicket()"
+      style="width:100%;padding:12px;background:#e63946;color:white;border:0;border-radius:8px;margin-top:15px;font-weight:bold">
+      Confirm Wicket
+    </button>
+
+    <button onclick="closeWicketPopup()"
+      style="width:100%;padding:10px;background:#555;color:white;border:0;border-radius:8px;margin-top:8px">
+      Cancel
+    </button>
+
+  </div>
+</div>
+  
 <hr>
 
   <button type="button" class="btn" onclick="quickBallUpdate(0)">Dot Ball (0)</button>
@@ -569,7 +611,9 @@ footer {
   <button type="button" class="btn" onclick="quickBallUpdate(3)">+3</button>
   <button type="button" class="btn" onclick="quickBallUpdate(4)">+4</button>
   <button type="button" class="btn" onclick="quickBallUpdate(6)">+6</button>
-  <button type="button" class="btn" onclick="quickBallUpdate('W')"> विकेट / Wicket</button>
+  <button type="button" class="btn" onclick="openWicketPopup()">
+  विकेट / Wicket
+</button>
   
 <button type="button" class="btn"
   onclick="quickBallUpdate('WD')">
@@ -1200,6 +1244,7 @@ async function loadQuickPlayers() {
   const battingSide = battingTeam === "opponent" ? "opponent" : "our";
   const bowlingSide = battingTeam === "opponent" ? "our" : "opponent";
 
+  // Match मधील सर्व Players मिळवा
   const { data: players, error } = await supabaseClient
     .from("match_players")
     .select("id, player_name, team_side, batting_order")
@@ -1211,8 +1256,30 @@ async function loadQuickPlayers() {
     return;
   }
 
+  // आधी बाद झालेल्या Players ची माहिती मिळवा
+  const { data: wickets, error: wicketError } = await supabaseClient
+    .from("ball_events")
+    .select("dismissed_player_id")
+    .eq("match_id", Number(matchId))
+    .eq("batting_team", battingTeam === "opponent" ? "opponent" : "team")
+    .eq("is_wicket", true);
+
+  if (wicketError) {
+    console.error("Wicket loading error:", wicketError.message);
+    return;
+  }
+
+  const dismissedPlayers = new Set(
+    (wickets || [])
+      .map(w => Number(w.dismissed_player_id))
+      .filter(id => Number.isFinite(id))
+  );
+
+  // बाद झालेले Players वगळा
   const battingPlayers = (players || []).filter(
-    player => player.team_side === battingSide
+    player =>
+      player.team_side === battingSide &&
+      !dismissedPlayers.has(Number(player.id))
   );
 
   const bowlingPlayers = (players || []).filter(
@@ -1238,7 +1305,6 @@ async function loadQuickPlayers() {
     bowlerSelect.appendChild(option);
   });
 }
-
 document.getElementById("quickMatchId").addEventListener("change", loadQuickPlayers);
 document.getElementById("battingTeam").addEventListener("change", loadQuickPlayers);
   
@@ -2271,9 +2337,74 @@ function parseCricketOvers(overs) {
 
   return completedOvers * 6 + balls;
 }
+let pendingDismissalType = "";
+let pendingDismissedPlayerId = "";
 
+function openWicketPopup() {
+  const striker = document.getElementById("strikerPlayer");
+  const nonStriker = document.getElementById("nonStrikerPlayer");
 
-async function quickBallUpdate(runsOrWicket) {
+  if (!striker.value || !nonStriker.value) {
+    alert("आधी Striker आणि Non-Striker निवडा.");
+    return;
+  }
+
+  const runOutSelect = document.getElementById("runOutPlayer");
+
+  runOutSelect.innerHTML = `
+    <option value="">Select Batsman</option>
+    <option value="${striker.value}">${striker.options[striker.selectedIndex].text}</option>
+    <option value="${nonStriker.value}">${nonStriker.options[nonStriker.selectedIndex].text}</option>
+  `;
+
+  document.getElementById("dismissalType").value = "";
+  document.getElementById("runOutPlayerBox").style.display = "none";
+  document.getElementById("wicketPopup").style.display = "flex";
+}
+
+function toggleRunOutPlayer() {
+  const type = document.getElementById("dismissalType").value;
+
+  document.getElementById("runOutPlayerBox").style.display =
+    type === "run_out" ? "block" : "none";
+}
+
+function closeWicketPopup() {
+  document.getElementById("wicketPopup").style.display = "none";
+}
+
+function confirmWicket() {
+  const type = document.getElementById("dismissalType").value;
+
+  if (!type) {
+    alert("कृपया How Out निवडा.");
+    return;
+  }
+
+  let dismissedPlayerId = document.getElementById("strikerPlayer").value;
+
+  if (type === "run_out") {
+    dismissedPlayerId = document.getElementById("runOutPlayer").value;
+
+    if (!dismissedPlayerId) {
+      alert("Run Out झालेला Batsman निवडा.");
+      return;
+    }
+  }
+
+  pendingDismissalType = type;
+  pendingDismissedPlayerId = dismissedPlayerId;
+
+  closeWicketPopup();
+
+  quickBallUpdate("W", pendingDismissalType, pendingDismissedPlayerId);
+}
+
+async function quickBallUpdate(
+  runsOrWicket,
+  dismissalType = null,
+  dismissedPlayerId = null
+) {
   const matchId = document.getElementById("quickMatchId").value;
   const message = document.getElementById("quickScoreMessage");
   const isOpponent =
@@ -2426,6 +2557,66 @@ if (currentBalls > 0 && currentBalls % 6 === 0) {
     return;
   }
 }
+
+  // Wicket validation
+if (isWicket) {
+  if (
+    !dismissalType ||
+    !dismissedPlayerId ||
+    (
+      Number(dismissedPlayerId) !== Number(strikerId) &&
+      Number(dismissedPlayerId) !== Number(nonStrikerId)
+    )
+  ) {
+    message.textContent = "⛔ Wicket Details योग्य निवडा.";
+    return;
+  }
+}
+
+// मागील Wicket नंतर नवीन Batsman निवडला आहे का ते तपासा
+const { data: lastWicketEvent, error: wicketCheckError } =
+  await supabaseClient
+    .from("ball_events")
+    .select("dismissed_player_id, is_wicket")
+    .eq("match_id", Number(matchId))
+    .eq("batting_team", battingTeam)
+    .eq("is_wicket", true)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+if (wicketCheckError) {
+  message.textContent =
+    "Wicket तपासताना Error: " + wicketCheckError.message;
+  return;
+}
+
+if (lastWicketEvent && lastWicketEvent.dismissed_player_id) {
+  const lastDismissedId = Number(lastWicketEvent.dismissed_player_id);
+
+  if (
+    Number(strikerId) === lastDismissedId ||
+    Number(nonStrikerId) === lastDismissedId
+  ) {
+    message.textContent =
+      "⛔ Wicket पडला आहे! कृपया नवीन Batsman निवडा.";
+    return;
+  }
+}
+}
+
+if (
+  lastWicketEvent &&
+  lastWicketEvent.is_wicket === true &&
+  (
+    Number(strikerId) === Number(lastWicketEvent.striker_id) ||
+    Number(nonStrikerId) === Number(lastWicketEvent.striker_id)
+  )
+) {
+  message.textContent =
+    "⛔ Wicket पडला आहे! कृपया नवीन Batsman निवडा.";
+  return;
+}
   
 const newBalls = currentBalls + (legalBall ? 1 : 0);
 const ballsRemaining = Math.max(0, totalBalls - newBalls);
@@ -2502,7 +2693,9 @@ const automaticTarget =
   extra_runs: extra
     ? (extra.type === "wide" ? runs : 1)
     : 0,
-  extra_type: extra ? extra.type : null
+  extra_type: extra ? extra.type : null,
+    dismissed_player_id: isWicket ? Number(dismissedPlayerId) : null,
+  dismissal_type: isWicket ? dismissalType : null
 });
   
   if (eventError) {
@@ -2513,6 +2706,37 @@ const automaticTarget =
     return;
   }
 
+  // Wicket नंतर बाद झालेला Player Dropdown मधून काढा
+if (isWicket) {
+  const strikerSelect = document.getElementById("strikerPlayer");
+  const nonStrikerSelect = document.getElementById("nonStrikerPlayer");
+
+  const dismissedId = String(dismissedPlayerId);
+
+  // दोन्ही Dropdown मधून बाद झालेला Player काढा
+  [strikerSelect, nonStrikerSelect].forEach(select => {
+    const option = Array.from(select.options).find(
+      option => option.value === dismissedId
+    );
+
+    if (option) {
+      option.remove();
+    }
+  });
+
+  // बाद झालेल्या खेळाडूची जागा रिकामी करा
+  if (strikerSelect.value === dismissedId) {
+    strikerSelect.value = "";
+  }
+
+  if (nonStrikerSelect.value === dismissedId) {
+    nonStrikerSelect.value = "";
+  }
+
+  message.textContent =
+    "🏏 Wicket! नवीन Batsman निवडा.";
+}
+  
   const teamName = isOpponent ? "Opponent Team" : "Aai Gavdevi Team";
 
   message.textContent = "✅ " + teamName + " — " + eventLabel +
