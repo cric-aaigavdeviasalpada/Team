@@ -1841,7 +1841,9 @@ if (latestEvent) {
       <tr>
         <td>
   ${player.player_name}
-  ${Number(player.id) === Number(currentStrikerId) ? " *" : ""}
+  ${Number(player.id) === Number(currentStrikerId)
+    ? '<span style="font-size:24px;font-weight:bold">*</span>'
+    : ""}
 </td>
         <td>${runs}</td>
         <td>${balls}</td>
