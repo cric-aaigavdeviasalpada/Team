@@ -2382,10 +2382,12 @@ function confirmWicket() {
     return;
   }
 
-  let dismissedPlayerId = document.getElementById("strikerPlayer").value;
+  let dismissedPlayerId =
+    document.getElementById("strikerPlayer").value;
 
   if (type === "run_out") {
-    dismissedPlayerId = document.getElementById("runOutPlayer").value;
+    dismissedPlayerId =
+      document.getElementById("runOutPlayer").value;
 
     if (!dismissedPlayerId) {
       alert("Run Out झालेला Batsman निवडा.");
@@ -2398,7 +2400,11 @@ function confirmWicket() {
 
   closeWicketPopup();
 
-  quickBallUpdate("W", pendingDismissalType, pendingDismissedPlayerId);
+  quickBallUpdate(
+    "W",
+    pendingDismissalType,
+    pendingDismissedPlayerId
+  );
 }
 
 async function quickBallUpdate(
@@ -2747,25 +2753,40 @@ if (target > 0) {
 const strikerSelect = document.getElementById("strikerPlayer");
 const nonStrikerSelect = document.getElementById("nonStrikerPlayer");
 
-let shouldSwapStrike =
-  legalBall && (runs === 1 || runs === 3);
+if (isWicket && dismissalType === "run_out") {
 
-// 6 वा बॉल पूर्ण झाल्यावर Strike बदलतो
-if (legalBall && newBalls % 6 === 0) {
-  shouldSwapStrike = !shouldSwapStrike;
-}
+  // Run Out: दोन्ही जागा manually निवडायच्या
+  strikerSelect.value = "";
+  nonStrikerSelect.value = "";
 
-if (
-  shouldSwapStrike &&
-  strikerSelect &&
-  nonStrikerSelect
-) {
-  const oldStriker = strikerSelect.value;
+  message.textContent =
+    "🏏 Run Out! आता Striker आणि Non-Striker manually निवडा.";
 
-  strikerSelect.value = nonStrikerSelect.value;
-  nonStrikerSelect.value = oldStriker;
-} 
-  
+} else if (isWicket) {
+
+  // इतर Wicket: नवीन Batsman Striker च्या जागी येईल
+  if (dismissedPlayerId == strikerId) {
+    strikerSelect.value = "";
+  } else {
+    nonStrikerSelect.value = "";
+  }
+
+} else {
+
+  let shouldSwapStrike =
+    legalBall && (runs === 1 || runs === 3);
+
+  // 6 वा बॉल पूर्ण झाल्यावर Strike बदलतो
+  if (legalBall && newBalls % 6 === 0) {
+    shouldSwapStrike = !shouldSwapStrike;
+  }
+
+  if (shouldSwapStrike) {
+    const oldStriker = strikerSelect.value;
+    strikerSelect.value = nonStrikerSelect.value;
+    nonStrikerSelect.value = oldStriker;
+  }
+}  
   await loadScoreboard();
 }
 async function undoLastBall() {
