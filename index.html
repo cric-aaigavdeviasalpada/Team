@@ -2114,13 +2114,12 @@ ${match?.toss_winner ? `
 
 </div>
 
-${score.target != null
-  ? `<p>🎯 Target: ${score.target}</p>`
+${currentBattingSide === secondTeamSide && score.target > 0
+  ? `
+    <p>🎯 Target: ${score.target}</p>
+    ${getChaseSummary(score)}
+  `
   : ""}
-
-
-
-${getChaseSummary(score)}
 
 ${isAdmin ? `
   <button class="btn" onclick="deleteScore('${score.match_id}')">
@@ -2453,9 +2452,10 @@ const inningsComplete =
 const firstInningsComplete =
   battingTeam === firstBattingTeam && inningsComplete;
 
-const automaticTarget = firstInningsComplete
-  ? battingRuns + 1
-  : score.target;
+const automaticTarget =
+  battingTeam === firstBattingTeam
+    ? (inningsComplete ? battingRuns + 1 : 0)
+    : score.target;
 
   const updates = {
   [runsColumn]: Number(score[runsColumn] || 0) + runs,
