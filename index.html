@@ -1713,7 +1713,7 @@ if (containers.length === 0) {
 
 const { data: ballEvents, error: ballEventsError } = await supabaseClient
   .from("ball_events")
-  .select("match_id, batting_team, runs, event_type, event_label, legal_ball, over_number, created_at, striker_id, non_striker_id, bowler_id, batsman_runs, extra_runs, extra_type, is_wicket")
+  .select("id, match_id, batting_team, runs, event_type, event_label, legal_ball, over_number, ball_number, created_at, striker_id, non_striker_id, bowler_id, batsman_runs, extra_runs, extra_type, is_wicket, dismissed_player_id, dismissal_type")  
   .in("match_id", matchIds)
   .order("created_at", { ascending: true });
 
@@ -1900,6 +1900,24 @@ if (latestEvent) {
       Number(event.batsman_runs) === 6
     ).length;
 
+    const dismissalEvent = events.find(event =>
+  event.is_wicket === true &&
+  Number(event.dismissed_player_id) === Number(player.id)
+);
+
+const dismissalLabels = {
+  bowled: "b Bowled",
+  caught: "c Caught",
+  lbw: "LBW",
+  run_out: "Run Out",
+  stumped: "Stumped",
+  hit_wicket: "Hit Wicket"
+};
+
+const howOut = dismissalEvent
+  ? (dismissalLabels[dismissalEvent.dismissal_type] || "Out")
+  : "Not Out";
+    
     const strikeRate = balls > 0
       ? ((runs / balls) * 100).toFixed(2)
       : "0.00";
@@ -1912,6 +1930,7 @@ if (latestEvent) {
     ? '<span style="font-size:24px;font-weight:bold">*</span>'
     : ""}
 </td>
+        <td>${howOut}</td>
         <td>${runs}</td>
         <td>${balls}</td>
         <td>${fours}</td>
@@ -1928,6 +1947,7 @@ if (latestEvent) {
         <thead>
           <tr style="background:#30343d">
             <th style="padding:8px">Batter</th>
+            <th>How Out</th>
             <th>R</th>
             <th>B</th>
             <th>4s</th>
