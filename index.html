@@ -2947,7 +2947,7 @@ if (isWicket && dismissalType === "run_out") {
     .from("matches")
     .update({
       status: "Completed",
-      result: "Match Tied. " + winner + " won the match by Toss Win Method."
+      result: "सामना बरोबरीत सुटला. " + winner + " Toss Win पद्धतीने सामना जिंकले."
     })
     .eq("id", Number(matchId));
 
@@ -2986,7 +2986,7 @@ if (isWicket && dismissalType === "run_out") {
     .from("matches")
     .update({
       status: "Completed",
-      result: winnerName + " won the match (Manual Decision)"
+      result: "सामना बरोबरीत सुटला. " + winnerName + " आयोजकांनी ठरवलेल्या पद्धतीनुसार सामना जिंकले."
     })
     .eq("id", Number(matchId));
 
@@ -3033,6 +3033,18 @@ async function startSuperOver() {
   const attemptNo = existing && existing.length
   ? Math.max(...existing.map(row => Number(row.attempt_no))) + 1
   : 1;
+
+  const { error: tieUpdateError } = await supabaseClient
+    .from("matches")
+    .update({
+      result: "Match Tied"
+    })
+    .eq("id", Number(matchId));
+
+  if (tieUpdateError) {
+    alert("Match Tie सेव्ह करताना Error: " + tieUpdateError.message);
+    return;
+  }
   
   const { data: insertedInnings, error } = await supabaseClient
     .from("super_over_innings")
@@ -3250,6 +3262,27 @@ const inningsComplete =
 
   document.getElementById("superOverMessage").textContent =
     inningsComplete ? "Innings पूर्ण झाले!" : "Score Updated!";
+
+      if (currentSuperOverInnings === 2) {
+    const ballsRemaining = Math.max(0, 6 - newBalls);
+    const runsRemaining = Math.max(0, superOverTarget - newRuns);
+
+    const requiredRunRate = ballsRemaining > 0
+      ? (runsRemaining / ballsRemaining) * 6
+      : 0;
+
+    let chaseMessage = "";
+
+    if (runsRemaining <= 0) {
+      chaseMessage = "🏆 Target पूर्ण! Super Over जिंकली!";
+    } else if (ballsRemaining <= 0 || newWickets >= 2) {
+      chaseMessage = `🎯 ${runsRemaining} धावा बाकी | Super Over पूर्ण`;
+    } else {
+      chaseMessage = `🎯 ${runsRemaining} धावा ${ballsRemaining} बॉलमध्ये हव्यात | RRR: ${requiredRunRate.toFixed(2)}`;
+    }
+
+    document.getElementById("superOverMessage").textContent = chaseMessage;
+  }
 
      if (inningsComplete) {
 
