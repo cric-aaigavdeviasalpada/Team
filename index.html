@@ -304,6 +304,32 @@ footer {
     </div>
   </div>
  <div id="battingScorecardContainer"></div>
+    <!-- SUPER OVER PUBLIC SCOREBOARD -->
+<div id="superOverPublicScoreboard"
+     style="display:none;background:#252832;padding:20px;border:2px solid #f1c40f;border-radius:12px;margin:20px 0">
+
+  <h2 style="color:#f1c40f;text-align:center">
+    ⚡ SUPER OVER
+  </h2>
+
+  <h3 id="superOverInningsTitle" style="text-align:center">
+    First Innings
+  </h3>
+
+  <h1 id="superOverScore" style="text-align:center;font-size:36px">
+    0/0
+  </h1>
+
+  <p id="superOverOvers" style="text-align:center">
+    Overs: 0.0 / 1
+  </p>
+
+  <p id="superOverBattingTeam" style="text-align:center">
+    Batting Team
+  </p>
+
+  <p id="superOverMessage" style="text-align:center;margin-top:12px"></p>
+</div>
 </section>
 
   <section id="team">
@@ -2432,6 +2458,7 @@ let currentSuperOverId = null;
 let currentSuperOverAttempt = 1;
 let currentSuperOverInnings = 1;
 let superOverTarget = null;
+let isSuperOverMode = false;
 
 function openWicketPopup() {
   const striker = document.getElementById("strikerPlayer");
@@ -2504,6 +2531,11 @@ async function quickBallUpdate(
   dismissalType = null,
   dismissedPlayerId = null
 ) {
+    if (isSuperOverMode) {
+    await superOverBall(runsOrWicket, dismissalType, dismissedPlayerId);
+    return;
+  }
+  
   const matchId = document.getElementById("quickMatchId").value;
   const message = document.getElementById("quickScoreMessage");
   const isOpponent =
@@ -3049,6 +3081,7 @@ async function startSuperOver() {
   currentSuperOverId = insertedInnings.find(
     row => row.innings_no === 1
   ).id;
+  isSuperOverMode = true;
   
   document.getElementById("tiePopup").style.display = "none";
   
@@ -3073,7 +3106,12 @@ document.getElementById("superOverMessage").textContent =
   alert("⚡ Super Over सुरू झाला! प्रथम दुसऱ्या डावात फलंदाजी केलेली टीम खेळेल.");
 
 }
-  async function superOverBall(value) {
+  
+  async function superOverBall(
+  value,
+  dismissalType = null,
+  dismissedPlayerId = null
+) {
   if (!currentSuperOverId) {
     alert("Super Over Innings सुरू झालेले नाही.");
     return;
@@ -3091,14 +3129,53 @@ document.getElementById("superOverMessage").textContent =
   }
 
   if (innings.status !== "LIVE") return;
+      const strikerId = document.getElementById("strikerPlayer").value;
+  const nonStrikerId = document.getElementById("nonStrikerPlayer").value;
+  const bowlerId = document.getElementById("bowlerPlayer").value;
 
-  const isWicket = value === "W";
-  const isWide = value === "WD";
-  const isNoBall = value === "NB";
+  if (!strikerId || !nonStrikerId || !bowlerId) {
+    alert("कृपया Striker, Non-Striker आणि Bowler निवडा.");
+    return;
+  }
+
+  if (strikerId === nonStrikerId) {
+    alert("Striker आणि Non-Striker वेगळे निवडा.");
+    return;
+  }
+
+    const isWicket = value === "W";
+  const isWide = value === "WD" || value === "WD_CUSTOM";
+  const isNoBall = value === "NB" || value === "NB_CUSTOM";
+
+  let customRuns = 0;
+
+  if (value === "WD_CUSTOM") {
+    customRuns = Number(document.getElementById("customWideRuns").value);
+  }
+
+  if (value === "NB_CUSTOM") {
+    customRuns = Number(document.getElementById("customNoBallRuns").value);
+  }
+
+  if (
+    (value === "WD_CUSTOM" || value === "NB_CUSTOM") &&
+    (!Number.isInteger(customRuns) || customRuns < 1 || customRuns > 10)
+  ) {
+    alert("Custom Runs 1 ते 10 दरम्यान टाका.");
+    return;
+  }
+
   const legalBall = !isWide && !isNoBall;
 
   const runs = isWicket ? 0 :
-    isWide || isNoBall ? 1 : Number(value);
+    isWide || isNoBall ? 1 + customRuns : Number(value);
+
+  const eventLabel =
+    value === "WD_CUSTOM" ? "Wd+" + customRuns :
+    value === "NB_CUSTOM" ? "Nb+" + customRuns :
+    isWicket ? "W" :
+    isWide ? "WD" :
+    isNoBall ? "NB" : String(runs);
 
   const balls = Math.round(Number(innings.overs) * 10) % 10;
   const totalBalls = Math.floor(Number(innings.overs)) * 6 + balls;
@@ -3108,6 +3185,26 @@ document.getElementById("superOverMessage").textContent =
   const newWickets = Number(innings.wickets) + (isWicket ? 1 : 0);
   const newOvers = Math.floor(newBalls / 6) + (newBalls % 6) / 10;
 
+  // Second Innings Target पुन्हा तपासणे
+  if (currentSuperOverInnings === 2 && superOverTarget === null) {
+    const matchId = Number(document.getElementById("quickMatchId").value);
+
+    const { data: firstInnings, error: targetError } = await supabaseClient
+      .from("super_over_innings")
+      .select("runs")
+      .eq("match_id", matchId)
+      .eq("attempt_no", currentSuperOverAttempt)
+      .eq("innings_no", 1)
+      .single();
+
+    if (targetError || !firstInnings) {
+      alert("Super Over Target मिळाला नाही.");
+      return;
+    }
+
+    superOverTarget = Number(firstInnings.runs) + 1;
+  }
+    
   const chaseWon =
   currentSuperOverInnings === 2 &&
   superOverTarget !== null &&
@@ -3137,16 +3234,21 @@ const inningsComplete =
     .from("super_over_ball_events")
     .insert({
       super_over_innings_id: currentSuperOverId,
+      striker_id: Number(strikerId),
+      non_striker_id: Number(nonStrikerId),
+      bowler_id: Number(bowlerId),
       over_number: 1,
       ball_number: currentBallNumber,
-      event_label: isWicket ? "W" : isWide ? "WD" : isNoBall ? "NB" : String(runs),
+      event_label: eventLabel,
       runs: runs,
       legal_ball: legalBall,
       is_wicket: isWicket,
       event_type: isWicket ? "wicket" : isWide ? "wide" : isNoBall ? "no_ball" : "normal",
-      batsman_runs: !isWide && !isNoBall && !isWicket ? runs : 0,
-      extra_runs: isWide || isNoBall ? 1 : 0,
-      extra_type: isWide ? "wide" : isNoBall ? "no_ball" : null
+      batsman_runs: isWicket || isWide ? 0 : isNoBall ? customRuns : runs,
+      extra_runs: isWide ? runs : isNoBall ? 1 : 0,
+      extra_type: isWide ? "wide" : isNoBall ? "no_ball" : null,
+      wicket_type: isWicket ? dismissalType : null,
+      dismissed_player_id: isWicket ? dismissedPlayerId : null
     });
 
   if (ballError) {
@@ -3263,6 +3365,10 @@ const inningsComplete =
 }
   
 async function undoLastBall() {
+ if (isSuperOverMode) {
+    await undoSuperOverBall();
+    return;
+  }
   const matchId = document.getElementById("quickMatchId").value;
   const message = document.getElementById("quickScoreMessage");
 
@@ -3382,6 +3488,128 @@ async function undoLastBall() {
   await loadScoreboard();
 }
 
+async function undoSuperOverBall() {
+  const message = document.getElementById("quickScoreMessage");
+
+  if (!currentSuperOverId) {
+    message.textContent = "Super Over Innings सापडली नाही.";
+    return;
+  }
+
+  const confirmUndo = confirm(
+      // Second Innings मधील Target पुन्हा मिळवा
+  if (currentSuperOverInnings === 2) {
+    const matchId = Number(document.getElementById("quickMatchId").value);
+
+    const { data: firstInnings, error: targetError } = await supabaseClient
+      .from("super_over_innings")
+      .select("runs")
+      .eq("match_id", matchId)
+      .eq("attempt_no", currentSuperOverAttempt)
+      .eq("innings_no", 1)
+      .single();
+
+    if (targetError || !firstInnings) {
+      message.textContent = "Super Over Target मिळाला नाही.";
+      return;
+    }
+
+    superOverTarget = Number(firstInnings.runs) + 1;
+  }
+    "Super Over मधील शेवटची Ball Delete करायची आहे का?"
+  );
+
+  if (!confirmUndo) return;
+
+  // शेवटची Super Over Ball शोधा
+  const { data: event, error: eventError } = await supabaseClient
+    .from("super_over_ball_events")
+    .select("*")
+    .eq("super_over_innings_id", currentSuperOverId)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (eventError || !event) {
+    message.textContent = eventError
+      ? "Error: " + eventError.message
+      : "Undo करण्यासाठी Ball Entry नाही.";
+    return;
+  }
+
+  // सध्याची Innings मिळवा
+  const { data: innings, error: inningsError } = await supabaseClient
+    .from("super_over_innings")
+    .select("*")
+    .eq("id", currentSuperOverId)
+    .single();
+
+  if (inningsError || !innings) {
+    message.textContent = "Super Over Score मिळाला नाही.";
+    return;
+  }
+
+  const currentBalls = Math.round(Number(innings.overs) * 10) % 10 +
+    Math.floor(Number(innings.overs)) * 6;
+
+  const previousBalls = Math.max(
+    0,
+    currentBalls - (event.legal_ball ? 1 : 0)
+  );
+
+  const previousOvers =
+    Math.floor(previousBalls / 6) + (previousBalls % 6) / 10;
+
+  const newRuns = Math.max(
+    0,
+    Number(innings.runs) - Number(event.runs || 0)
+  );
+
+  const newWickets = Math.max(
+    0,
+    Number(innings.wickets) - (event.is_wicket ? 1 : 0)
+  );
+
+  // Ball History मधून Delete
+  const { error: deleteError } = await supabaseClient
+    .from("super_over_ball_events")
+    .delete()
+    .eq("id", event.id);
+
+  if (deleteError) {
+    message.textContent = "Ball Delete झाली नाही: " + deleteError.message;
+    return;
+  }
+
+  // Score मागच्या स्थितीत आणा
+  const { error: updateError } = await supabaseClient
+    .from("super_over_innings")
+    .update({
+      runs: newRuns,
+      wickets: newWickets,
+      overs: previousOvers,
+      status: "LIVE"
+    })
+    .eq("id", currentSuperOverId);
+
+  if (updateError) {
+    message.textContent = "Score Update Error: " + updateError.message;
+    return;
+  }
+
+  document.getElementById("superOverScore").textContent =
+    newRuns + "/" + newWickets;
+
+  document.getElementById("superOverOvers").textContent =
+    "Overs: " + previousOvers.toFixed(1) + " / 1";
+
+  document.getElementById("superOverMessage").textContent =
+    "↩️ शेवटची Ball Undo झाली!";
+
+  message.textContent = "Super Over ची शेवटची Ball Undo झाली!";
+}
+  
 async function deleteScore(matchId) {
   const confirmDelete = confirm(
     "या मॅचचा Score कायमचा Delete करायचा आहे का?"
