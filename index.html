@@ -305,7 +305,7 @@ footer {
   </div>
  <div id="battingScorecardContainer"></div>
     <!-- SUPER OVER PUBLIC SCOREBOARD -->
-<div id="superOverPublicScoreboard"
+<div id="superOverDashboard"
      style="display:none;background:#252832;padding:20px;border:2px solid #f1c40f;border-radius:12px;margin:20px 0">
 
   <h2 style="color:#f1c40f;text-align:center">
@@ -702,36 +702,7 @@ footer {
     </button>
   </div>
 </div>
-  
-  <!-- SUPER OVER SCOREBOARD -->
-<div id="superOverDashboard"
- style="display:none;background:#252832;padding:20px;border:2px solid #f1c40f;border-radius:12px;margin:20px 0">
-
-  <h2 style="color:#f1c40f;text-align:center">⚡ SUPER OVER</h2>
-
-  <h3 id="superOverInningsTitle" style="text-align:center">First Innings</h3>
-
-  <h1 id="superOverScore" style="text-align:center;font-size:36px">0/0</h1>
-
-  <p id="superOverOvers" style="text-align:center">Overs: 0.0 / 1</p>
-
-  <p id="superOverBattingTeam" style="text-align:center">Batting Team</p>
-
-  <div id="superOverControls" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px">
-    <button class="btn" onclick="superOverBall(0)">0</button>
-    <button class="btn" onclick="superOverBall(1)">+1</button>
-    <button class="btn" onclick="superOverBall(2)">+2</button>
-    <button class="btn" onclick="superOverBall(3)">+3</button>
-    <button class="btn" onclick="superOverBall(4)">+4</button>
-    <button class="btn" onclick="superOverBall(6)">+6</button>
-    <button class="btn" onclick="superOverBall('W')">Wicket</button>
-    <button class="btn" onclick="superOverBall('WD')">Wide</button>
-    <button class="btn" onclick="superOverBall('NB')">No Ball</button>
-  </div>
-
-  <p id="superOverMessage" style="text-align:center;margin-top:12px"></p>
-</div>
-  
+    
 <hr>
 
   <button type="button" class="btn" onclick="quickBallUpdate(0)">Dot Ball (0)</button>
@@ -2997,7 +2968,9 @@ if (isWicket && dismissalType === "run_out") {
     alert("कृपया Match Winner निवडा.");
     return;
   }
-
+    
+  isSuperOverMode = false;
+    
   const winnerName =
     winner === "team" ? "Aai Gavdevi Team" : "Opponent Team";
 
@@ -3084,11 +3057,16 @@ async function startSuperOver() {
   isSuperOverMode = true;
   
   document.getElementById("tiePopup").style.display = "none";
+  document.getElementById("superOverTiePopup").style.display = "none";
   
 currentSuperOverAttempt = attemptNo;
 currentSuperOverInnings = 1;
 
 document.getElementById("superOverDashboard").style.display = "block";
+  document.getElementById("superOverDashboard").scrollIntoView({
+  behavior: "smooth",
+  block: "center"
+});
 
 document.getElementById("superOverInningsTitle").textContent =
   "Super Over - Innings 1";
@@ -3334,6 +3312,7 @@ const inningsComplete =
     }
 
     if (winner) {
+      isSuperOverMode = false;
       const winnerName =
         winner === "team" ? "Aai Gavdevi Team" : "Opponent Team";
 
@@ -3349,15 +3328,13 @@ const inningsComplete =
         alert("Winner सेव्ह करताना Error: " + winnerError.message);
         return;
       }
-
-      document.getElementById("superOverDashboard").style.display = "none";
+      
       alert("🏆 " + winnerName + " Super Over Winner!");
 
       await loadMatches();
       await loadScoreboard();
 
     } else {
-      document.getElementById("superOverDashboard").style.display = "none";
       document.getElementById("superOverTiePopup").style.display = "flex";
     }
   }
@@ -3496,8 +3473,7 @@ async function undoSuperOverBall() {
     return;
   }
 
-  const confirmUndo = confirm(
-      // Second Innings मधील Target पुन्हा मिळवा
+    // Second Innings मधील Target पुन्हा मिळवा
   if (currentSuperOverInnings === 2) {
     const matchId = Number(document.getElementById("quickMatchId").value);
 
@@ -3516,9 +3492,11 @@ async function undoSuperOverBall() {
 
     superOverTarget = Number(firstInnings.runs) + 1;
   }
+
+  const confirmUndo = confirm(
     "Super Over मधील शेवटची Ball Delete करायची आहे का?"
   );
-
+  
   if (!confirmUndo) return;
 
   // शेवटची Super Over Ball शोधा
