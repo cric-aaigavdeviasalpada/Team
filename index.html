@@ -600,7 +600,110 @@ footer {
       Cancel
     </button>
 
+    </div>
+</div>
+
+<!-- MATCH TIE POPUP -->
+<div id="tiePopup"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;justify-content:center;align-items:center;padding:15px">
+
+  <div style="background:#252832;padding:20px;border-radius:12px;width:100%;max-width:400px;border:2px solid #f1c40f">
+
+    <h2 style="color:#f1c40f;text-align:center">🏏 MATCH TIE!</h2>
+    <p style="text-align:center">मॅच बरोबरीत सुटली आहे. आता विजेता कसा ठरवायचा?</p>
+
+    <button class="btn" onclick="resolveTieByTossWinner()" style="width:100%;margin:8px 0">
+      🏆 Toss Winner is Match Winner
+    </button>
+
+    <button class="btn" onclick="startSuperOver()" style="width:100%;margin:8px 0">
+      ⚡ Super Over
+    </button>
+
+    <button class="btn" onclick="openOtherWinnerPopup()" style="width:100%;margin:8px 0">
+      ✍️ Other Logic
+    </button>
+
   </div>
+</div>
+  
+ <!-- OTHER WINNER POPUP -->
+<div id="otherWinnerPopup"
+ style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10001;justify-content:center;align-items:center;padding:15px">
+
+  <div style="background:#252832;padding:20px;border-radius:12px;width:100%;max-width:400px;border:2px solid #f1c40f">
+
+    <h2 style="color:#f1c40f;text-align:center">🏆 Select Match Winner</h2>
+
+    <label>Choose Winner</label>
+
+    <select id="manualMatchWinner"
+      style="width:100%;padding:12px;margin:10px 0">
+      <option value="">Select Winner</option>
+      <option value="team">Aai Gavdevi Team</option>
+      <option value="opponent">Opponent Team</option>
+    </select>
+
+    <button class="btn" onclick="saveOtherWinner()"
+      style="width:100%;margin:8px 0">
+      Confirm Winner
+    </button>
+
+    <button class="btn" onclick="document.getElementById('otherWinnerPopup').style.display='none'"
+      style="width:100%;margin:8px 0;background:#555">
+      Cancel
+    </button>
+
+  </div>
+</div>
+
+  <!-- SUPER OVER TIE POPUP -->
+<div id="superOverTiePopup"
+ style="display:none;position:fixed;inset:0;background:#000b;z-index:9999;align-items:center;justify-content:center;padding:15px">
+
+  <div style="background:#252832;padding:25px;border-radius:12px;width:100%;max-width:400px;text-align:center">
+    <h2 style="color:#f1c40f">⚡ SUPER OVER TIE!</h2>
+    <p>Super Over सुद्धा Tie झाला आहे.</p>
+
+    <button class="btn" onclick="startSuperOver()"
+      style="width:100%;margin:8px 0">
+      ⚡ Super Over Again
+    </button>
+
+    <button class="btn" onclick="openOtherWinnerPopup()"
+      style="width:100%;margin:8px 0">
+      ✍️ Other Logic
+    </button>
+  </div>
+</div>
+  
+  <!-- SUPER OVER SCOREBOARD -->
+<div id="superOverDashboard"
+ style="display:none;background:#252832;padding:20px;border:2px solid #f1c40f;border-radius:12px;margin:20px 0">
+
+  <h2 style="color:#f1c40f;text-align:center">⚡ SUPER OVER</h2>
+
+  <h3 id="superOverInningsTitle" style="text-align:center">First Innings</h3>
+
+  <h1 id="superOverScore" style="text-align:center;font-size:36px">0/0</h1>
+
+  <p id="superOverOvers" style="text-align:center">Overs: 0.0 / 1</p>
+
+  <p id="superOverBattingTeam" style="text-align:center">Batting Team</p>
+
+  <div id="superOverControls" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px">
+    <button class="btn" onclick="superOverBall(0)">0</button>
+    <button class="btn" onclick="superOverBall(1)">+1</button>
+    <button class="btn" onclick="superOverBall(2)">+2</button>
+    <button class="btn" onclick="superOverBall(3)">+3</button>
+    <button class="btn" onclick="superOverBall(4)">+4</button>
+    <button class="btn" onclick="superOverBall(6)">+6</button>
+    <button class="btn" onclick="superOverBall('W')">Wicket</button>
+    <button class="btn" onclick="superOverBall('WD')">Wide</button>
+    <button class="btn" onclick="superOverBall('NB')">No Ball</button>
+  </div>
+
+  <p id="superOverMessage" style="text-align:center;margin-top:12px"></p>
 </div>
   
 <hr>
@@ -2325,6 +2428,10 @@ function parseCricketOvers(overs) {
 }
 let pendingDismissalType = "";
 let pendingDismissedPlayerId = "";
+let currentSuperOverId = null;
+let currentSuperOverAttempt = 1;
+let currentSuperOverInnings = 1;
+let superOverTarget = null;
 
 function openWicketPopup() {
   const striker = document.getElementById("strikerPlayer");
@@ -2774,6 +2881,386 @@ if (isWicket && dismissalType === "run_out") {
 }  
   await loadScoreboard();
 }
+    // MATCH TIE CHECK
+  const { data: latestScore } = await supabaseClient
+    .from("scoreboards")
+    .select("team_runs, wickets, overs, opponent_runs, opponent_wickets, opponent_overs, total_overs")
+    .eq("match_id", Number(matchId))
+    .maybeSingle();
+
+  if (latestScore) {
+    const teamBalls = parseCricketOvers(latestScore.overs);
+    const opponentBalls = parseCricketOvers(latestScore.opponent_overs);
+    const maxBalls = Number(latestScore.total_overs || 5) * 6;
+
+    const teamComplete =
+      teamBalls >= maxBalls || Number(latestScore.wickets) >= 10;
+
+    const opponentComplete =
+      opponentBalls >= maxBalls || Number(latestScore.opponent_wickets) >= 10;
+
+    const bothEqual =
+      Number(latestScore.team_runs) === Number(latestScore.opponent_runs);
+
+    if (teamComplete && opponentComplete && bothEqual) {
+      document.getElementById("tiePopup").style.display = "flex";
+    }
+  }
+
+  async function resolveTieByTossWinner() {
+  const matchId = document.getElementById("quickMatchId").value;
+
+  if (!matchId) {
+    alert("कृपया Match निवडा.");
+    return;
+  }
+
+  const { data: match, error } = await supabaseClient
+    .from("matches")
+    .select("toss_winner")
+    .eq("id", Number(matchId))
+    .single();
+
+  if (error || !match || !match.toss_winner) {
+    alert("Toss Winner मिळाला नाही. Match Details तपासा.");
+    return;
+  }
+
+ const winner =
+  match.toss_winner === "opponent"
+    ? "Opponent Team"
+    : "Aai Gavdevi Team";
+
+  const { error: updateError } = await supabaseClient
+    .from("matches")
+    .update({
+      status: "Completed",
+      result: winner + " won the match (Tie - Toss Winner)"
+    })
+    .eq("id", Number(matchId));
+
+  if (updateError) {
+    alert("Winner सेव्ह करताना Error: " + updateError.message);
+    return;
+  }
+
+  document.getElementById("tiePopup").style.display = "none";
+
+  alert("🏆 Toss Winner हा Match Winner घोषित झाला!");
+
+  await loadMatches();
+  await loadScoreboard();
+}
+
+ function openOtherWinnerPopup() {
+  document.getElementById("tiePopup").style.display = "none";
+  document.getElementById("otherWinnerPopup").style.display = "flex";
+}
+  async function saveOtherWinner() {
+  const matchId = document.getElementById("quickMatchId").value;
+  const winner = document.getElementById("manualMatchWinner").value;
+
+  if (!winner) {
+    alert("कृपया Match Winner निवडा.");
+    return;
+  }
+
+  const winnerName =
+    winner === "team" ? "Aai Gavdevi Team" : "Opponent Team";
+
+  const { error } = await supabaseClient
+    .from("matches")
+    .update({
+      status: "Completed",
+      result: winnerName + " won the match (Manual Decision)"
+    })
+    .eq("id", Number(matchId));
+
+  if (error) {
+    alert("Winner सेव्ह करताना Error: " + error.message);
+    return;
+  }
+
+  document.getElementById("otherWinnerPopup").style.display = "none";
+
+  alert("🏆 " + winnerName + " Match Winner घोषित झाली!");
+
+  await loadMatches();
+  await loadScoreboard();
+}
+
+async function startSuperOver() {
+  const matchId = document.getElementById("quickMatchId").value;
+
+  if (!matchId) {
+    alert("कृपया Match निवडा.");
+    return;
+  }
+
+  const { data: match, error: matchError } = await supabaseClient
+    .from("matches")
+    .select("batting_first")
+    .eq("id", Number(matchId))
+    .single();
+
+  if (matchError || !match) {
+    alert("Match Details मिळाले नाहीत.");
+    return;
+  }
+
+  const firstBatting = match.batting_first;
+  const secondBatting = firstBatting === "team" ? "opponent" : "team";
+
+  const { data: existing } = await supabaseClient
+    .from("super_over_innings")
+    .select("attempt_no")
+    .eq("match_id", Number(matchId));
+
+  const attemptNo = existing && existing.length
+  ? Math.max(...existing.map(row => Number(row.attempt_no))) + 1
+  : 1;
+  
+  const { data: insertedInnings, error } = await supabaseClient
+    .from("super_over_innings")
+    .insert([
+      {
+        match_id: Number(matchId),
+        attempt_no: attemptNo,
+        innings_no: 1,
+        batting_team: secondBatting,
+        status: "LIVE"
+      },
+      {
+        match_id: Number(matchId),
+        attempt_no: attemptNo,
+        innings_no: 2,
+        batting_team: firstBatting,
+        status: "UPCOMING"
+      }
+        ])
+    .select("id, innings_no, batting_team");
+
+  if (error) {
+    alert("Super Over सुरू करताना Error: " + error.message);
+    return;
+  }
+  
+  currentSuperOverId = insertedInnings.find(
+    row => row.innings_no === 1
+  ).id;
+  
+  document.getElementById("tiePopup").style.display = "none";
+  
+currentSuperOverAttempt = attemptNo;
+currentSuperOverInnings = 1;
+
+document.getElementById("superOverDashboard").style.display = "block";
+
+document.getElementById("superOverInningsTitle").textContent =
+  "Super Over - Innings 1";
+
+document.getElementById("superOverScore").textContent = "0/0";
+
+document.getElementById("superOverOvers").textContent = "Overs: 0.0 / 1";
+
+document.getElementById("superOverBattingTeam").textContent =
+  secondBatting === "team" ? "Aai Gavdevi Team Batting" : "Opponent Team Batting";
+
+document.getElementById("superOverMessage").textContent =
+  "पहिला Super Over सुरू झाला!";
+
+  alert("⚡ Super Over सुरू झाला! प्रथम दुसऱ्या डावात फलंदाजी केलेली टीम खेळेल.");
+
+}
+  async function superOverBall(value) {
+  if (!currentSuperOverId) {
+    alert("Super Over Innings सुरू झालेले नाही.");
+    return;
+  }
+
+   const { data: innings, error: fetchError } = await supabaseClient
+    .from("super_over_innings")
+    .select("runs, wickets, overs, status, batting_team")
+    .eq("id", currentSuperOverId)
+    .single();
+
+  if (fetchError || !innings) {
+    alert("Super Over Score मिळाला नाही.");
+    return;
+  }
+
+  if (innings.status !== "LIVE") return;
+
+  const isWicket = value === "W";
+  const isWide = value === "WD";
+  const isNoBall = value === "NB";
+  const legalBall = !isWide && !isNoBall;
+
+  const runs = isWicket ? 0 :
+    isWide || isNoBall ? 1 : Number(value);
+
+  const balls = Math.round(Number(innings.overs) * 10) % 10;
+  const totalBalls = Math.floor(Number(innings.overs)) * 6 + balls;
+  const newBalls = totalBalls + (legalBall ? 1 : 0);
+
+  const newRuns = Number(innings.runs) + runs;
+  const newWickets = Number(innings.wickets) + (isWicket ? 1 : 0);
+  const newOvers = Math.floor(newBalls / 6) + (newBalls % 6) / 10;
+
+  const chaseWon =
+  currentSuperOverInnings === 2 &&
+  superOverTarget !== null &&
+  newRuns >= superOverTarget;
+
+const inningsComplete =
+  newBalls >= 6 || newWickets >= 2 || chaseWon;
+
+  const { error: updateError } = await supabaseClient
+    .from("super_over_innings")
+    .update({
+      runs: newRuns,
+      wickets: newWickets,
+      overs: newOvers,
+      status: inningsComplete ? "COMPLETED" : "LIVE"
+    })
+    .eq("id", currentSuperOverId);
+
+  if (updateError) {
+    alert("Score सेव्ह झाला नाही: " + updateError.message);
+    return;
+  }
+
+  const currentBallNumber = newBalls;
+
+  const { error: ballError } = await supabaseClient
+    .from("super_over_ball_events")
+    .insert({
+      super_over_innings_id: currentSuperOverId,
+      over_number: 1,
+      ball_number: currentBallNumber,
+      event_label: isWicket ? "W" : isWide ? "WD" : isNoBall ? "NB" : String(runs),
+      runs: runs,
+      legal_ball: legalBall,
+      is_wicket: isWicket,
+      event_type: isWicket ? "wicket" : isWide ? "wide" : isNoBall ? "no_ball" : "normal",
+      batsman_runs: !isWide && !isNoBall && !isWicket ? runs : 0,
+      extra_runs: isWide || isNoBall ? 1 : 0,
+      extra_type: isWide ? "wide" : isNoBall ? "no_ball" : null
+    });
+
+  if (ballError) {
+    alert("Ball History सेव्ह झाला नाही: " + ballError.message);
+    return;
+  }
+    
+  document.getElementById("superOverScore").textContent =
+    newRuns + "/" + newWickets;
+
+  document.getElementById("superOverOvers").textContent =
+    "Overs: " + newOvers.toFixed(1) + " / 1";
+
+  document.getElementById("superOverMessage").textContent =
+    inningsComplete ? "Innings पूर्ण झाले!" : "Score Updated!";
+
+     if (inningsComplete) {
+
+  if (currentSuperOverInnings === 1) {
+
+    superOverTarget = newRuns + 1;
+
+    const matchId = Number(document.getElementById("quickMatchId").value);
+
+    const { data: nextInnings, error: nextError } = await supabaseClient
+      .from("super_over_innings")
+      .select("id, batting_team")
+      .eq("match_id", matchId)
+      .eq("attempt_no", currentSuperOverAttempt)
+      .eq("innings_no", 2)
+      .single();
+
+    if (nextError || !nextInnings) {
+      alert("Second Innings मिळाली नाही.");
+      return;
+    }
+
+    currentSuperOverId = nextInnings.id;
+    currentSuperOverInnings = 2;
+
+    await supabaseClient
+      .from("super_over_innings")
+      .update({ status: "LIVE" })
+      .eq("id", currentSuperOverId);
+
+    document.getElementById("superOverInningsTitle").textContent =
+      "Super Over - Innings 2";
+
+    document.getElementById("superOverScore").textContent = "0/0";
+    document.getElementById("superOverOvers").textContent = "Overs: 0.0 / 1";
+
+    document.getElementById("superOverBattingTeam").textContent =
+      nextInnings.batting_team === "team"
+        ? "Aai Gavdevi Team Batting"
+        : "Opponent Team Batting";
+
+    document.getElementById("superOverMessage").textContent =
+      "🎯 Target: " + superOverTarget + " Runs";
+
+  } else {
+
+    const matchId = Number(document.getElementById("quickMatchId").value);
+
+    const { data: firstInnings, error: firstError } = await supabaseClient
+      .from("super_over_innings")
+      .select("runs, batting_team")
+      .eq("match_id", matchId)
+      .eq("attempt_no", currentSuperOverAttempt)
+      .eq("innings_no", 1)
+      .single();
+
+    if (firstError || !firstInnings) {
+      alert("First Innings Score मिळाला नाही.");
+      return;
+    }
+
+    let winner = null;
+
+    if (newRuns > Number(firstInnings.runs)) {
+      winner = innings.batting_team;
+    } else if (newRuns < Number(firstInnings.runs)) {
+      winner = firstInnings.batting_team;
+    }
+
+    if (winner) {
+      const winnerName =
+        winner === "team" ? "Aai Gavdevi Team" : "Opponent Team";
+
+      const { error: winnerError } = await supabaseClient
+        .from("matches")
+        .update({
+          status: "Completed",
+          result: winnerName + " won by Super Over"
+        })
+        .eq("id", matchId);
+
+      if (winnerError) {
+        alert("Winner सेव्ह करताना Error: " + winnerError.message);
+        return;
+      }
+
+      document.getElementById("superOverDashboard").style.display = "none";
+      alert("🏆 " + winnerName + " Super Over Winner!");
+
+      await loadMatches();
+      await loadScoreboard();
+
+    } else {
+      document.getElementById("superOverDashboard").style.display = "none";
+      document.getElementById("superOverTiePopup").style.display = "flex";
+    }
+  }
+}
+}
+  
 async function undoLastBall() {
   const matchId = document.getElementById("quickMatchId").value;
   const message = document.getElementById("quickScoreMessage");
