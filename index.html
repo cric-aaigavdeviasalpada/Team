@@ -2880,7 +2880,7 @@ if (isWicket && dismissalType === "run_out") {
   }
 }  
   await loadScoreboard();
-}
+
     // MATCH TIE CHECK
   const { data: latestScore } = await supabaseClient
     .from("scoreboards")
@@ -2906,6 +2906,7 @@ if (isWicket && dismissalType === "run_out") {
       document.getElementById("tiePopup").style.display = "flex";
     }
   }
+ }
 
   async function resolveTieByTossWinner() {
   const matchId = document.getElementById("quickMatchId").value;
