@@ -1796,6 +1796,14 @@ if (matchPlayersError) {
 }
 
 const getChaseSummary = (score) => {
+    if (score.matches?.result?.startsWith("Match Tied")) {
+    return `
+      <div style="background:#3b3020;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #d69e36">
+        <strong>🏏 Match Result</strong>
+        <p style="margin:8px 0">${score.matches.result}</p>
+      </div>
+    `;
+  }
   const events = (ballEvents || []).filter(event =>
     Number(event.match_id) === Number(score.match_id)
   );
@@ -2939,7 +2947,7 @@ if (isWicket && dismissalType === "run_out") {
     .from("matches")
     .update({
       status: "Completed",
-      result: winner + " won the match (Tie - Toss Winner)"
+      result: "Match Tied. " + winner + " won the match by Toss Win Method."
     })
     .eq("id", Number(matchId));
 
