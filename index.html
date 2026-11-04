@@ -2973,13 +2973,12 @@ if (target > 0) {
   message.textContent += chaseMessage;
 }
 
- // Automatic Strike Rotation
+// Automatic Strike Rotation
 const strikerSelect = document.getElementById("strikerPlayer");
 const nonStrikerSelect = document.getElementById("nonStrikerPlayer");
 
 if (isWicket && dismissalType === "run_out") {
 
-  // Run Out: दोन्ही जागा manually निवडायच्या
   strikerSelect.value = "";
   nonStrikerSelect.value = "";
 
@@ -2988,7 +2987,6 @@ if (isWicket && dismissalType === "run_out") {
 
 } else if (isWicket) {
 
-  // इतर Wicket: नवीन Batsman Striker च्या जागी येईल
   if (dismissedPlayerId == strikerId) {
     strikerSelect.value = "";
   } else {
@@ -2997,10 +2995,23 @@ if (isWicket && dismissalType === "run_out") {
 
 } else {
 
-  let shouldSwapStrike =
-    legalBall && (runs === 1 || runs === 3);
+  // Penalty सोडून फक्त पूर्ण केलेल्या धावा मोजा
+  let completedRuns = runs;
 
-  // 6 वा बॉल पूर्ण झाल्यावर Strike बदलतो
+  if (runsOrWicket === "WD" || runsOrWicket === "NB") {
+    completedRuns = 0;
+  }
+
+  if (
+    runsOrWicket === "WD_CUSTOM" ||
+    runsOrWicket === "NB_CUSTOM"
+  ) {
+    completedRuns = customRuns;
+  }
+
+  let shouldSwapStrike = completedRuns % 2 === 1;
+
+  // Legal Over पूर्ण झाल्यावर Strike बदलतो
   if (legalBall && newBalls % 6 === 0) {
     shouldSwapStrike = !shouldSwapStrike;
   }
@@ -3010,10 +3021,9 @@ if (isWicket && dismissalType === "run_out") {
     strikerSelect.value = nonStrikerSelect.value;
     nonStrikerSelect.value = oldStriker;
   }
-}  
-  await loadScoreboard();
-
-    // MATCH TIE CHECK
+}
+  
+     // MATCH TIE CHECK
   const { data: latestScore } = await supabaseClient
     .from("scoreboards")
     .select("team_runs, wickets, overs, opponent_runs, opponent_wickets, opponent_overs, total_overs")
