@@ -3178,13 +3178,12 @@ document.getElementById("superOverMessage").textContent =
   alert("⚡ Super Over सुरू झाला! प्रथम दुसऱ्या डावात फलंदाजी केलेली टीम खेळेल.");
 
 }
-
   
 async function cancelSuperOver() {
   const matchId = document.getElementById("quickMatchId").value;
 
-  if (!matchId || !currentSuperOverAttempt) {
-    alert("Super Over ची माहिती मिळाली नाही.");
+  if (!matchId) {
+    alert("कृपया Match निवडा.");
     return;
   }
 
@@ -3192,11 +3191,25 @@ async function cancelSuperOver() {
     return;
   }
 
+  // Supabase मधून शेवटचा Super Over Attempt शोधणे
+  const { data: attempt, error: fetchError } = await supabaseClient
+    .from("super_over_innings")
+    .select("attempt_no")
+    .eq("match_id", Number(matchId))
+    .order("attempt_no", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (fetchError || !attempt) {
+    alert("Super Over ची माहिती मिळाली नाही.");
+    return;
+  }
+
   const { error } = await supabaseClient
     .from("super_over_innings")
     .delete()
     .eq("match_id", Number(matchId))
-    .eq("attempt_no", currentSuperOverAttempt);
+    .eq("attempt_no", attempt.attempt_no);
 
   if (error) {
     alert("Super Over Cancel Error: " + error.message);
@@ -3207,16 +3220,16 @@ async function cancelSuperOver() {
   currentSuperOverId = null;
   currentSuperOverAttempt = null;
   currentSuperOverInnings = null;
+  superOverTarget = null;
 
   document.getElementById("superOverDashboard").style.display = "none";
 
   await loadScoreboard();
 
-  document.getElementById("tiePopup").style.display = "block";
+  document.getElementById("tiePopup").style.display = "flex";
 
   alert("Super Over Cancel झाला. आता Tie चे पर्याय पुन्हा निवडू शकता.");
 }
-
   
   async function superOverBall(
   value,
