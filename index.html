@@ -306,15 +306,6 @@ footer {
  <div id="battingScorecardContainer"></div>
     <!-- SUPER OVER PUBLIC SCOREBOARD -->
 <div id="superOverDashboard"
-     style="display:none;background:#252832;padding:20px;border:2px solid #f1c40f;border-radius:12px;margin:20px 0">
-
-  <h2 style="color:#f1c40f;text-align:center">
-    ⚡ SUPER OVER
-  </h2>
-
-  <h3 id="superOverInningsTitle" style="text-align:center">
-    First Innings
-  </h3>
 
   <h1 id="superOverScore" style="text-align:center;font-size:36px">
     0/0
@@ -329,6 +320,10 @@ footer {
   </p>
 
   <p id="superOverMessage" style="text-align:center;margin-top:12px"></p>
+  <button onclick="cancelSuperOver()"
+  style="width:100%;padding:12px;background:#e63946;color:white;border:0;border-radius:8px;margin-top:15px;font-weight:bold">
+  ↩️ Cancel Super Over & Back to Tie
+</button>
 </div>
 </section>
 
@@ -3120,6 +3115,45 @@ document.getElementById("superOverMessage").textContent =
   alert("⚡ Super Over सुरू झाला! प्रथम दुसऱ्या डावात फलंदाजी केलेली टीम खेळेल.");
 
 }
+
+  
+async function cancelSuperOver() {
+  const matchId = document.getElementById("quickMatchId").value;
+
+  if (!matchId || !currentSuperOverAttempt) {
+    alert("Super Over ची माहिती मिळाली नाही.");
+    return;
+  }
+
+  if (!confirm("Super Over Cancel करायचा आहे का? मूळ Match Score कायम राहील.")) {
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("super_over_innings")
+    .delete()
+    .eq("match_id", Number(matchId))
+    .eq("attempt_no", currentSuperOverAttempt);
+
+  if (error) {
+    alert("Super Over Cancel Error: " + error.message);
+    return;
+  }
+
+  isSuperOverMode = false;
+  currentSuperOverId = null;
+  currentSuperOverAttempt = null;
+  currentSuperOverInnings = null;
+
+  document.getElementById("superOverDashboard").style.display = "none";
+
+  await loadScoreboard();
+
+  document.getElementById("tiePopup").style.display = "block";
+
+  alert("Super Over Cancel झाला. आता Tie चे पर्याय पुन्हा निवडू शकता.");
+}
+
   
   async function superOverBall(
   value,
