@@ -3034,7 +3034,8 @@ async function startSuperOver() {
     return;
   }
 
-  const firstBatting = match.batting_first;
+  const firstBatting =
+  match.batting_first === "our" ? "team" : match.batting_first;
   const secondBatting = firstBatting === "team" ? "opponent" : "team";
 
   const { data: existing } = await supabaseClient
