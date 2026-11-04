@@ -707,7 +707,7 @@ footer {
 
   <!-- SUPER OVER CONFIRMATION POPUP -->
 <div id="superOverConfirmPopup"
- style="display:none;position:fixed;inset:0;background:#000b;z-index:10000;align-items:center;justify-content:center;padding:15px">
+ style="display:none;position:fixed;inset:0;background:#000b;z-index:10002;align-items:center;justify-content:center;padding:15px">
 
   <div style="background:#252832;padding:25px;border-radius:12px;width:100%;max-width:400px;text-align:center">
 
@@ -3009,8 +3009,11 @@ if (isWicket && dismissalType === "run_out") {
   await loadScoreboard();
 }
 
- function openOtherWinnerPopup() {
+function openOtherWinnerPopup() {
   document.getElementById("tiePopup").style.display = "none";
+  document.getElementById("superOverTiePopup").style.display = "none";
+  document.getElementById("superOverConfirmPopup").style.display = "none";
+
   document.getElementById("otherWinnerPopup").style.display = "flex";
 }
   async function saveOtherWinner() {
@@ -3136,6 +3139,7 @@ async function startSuperOver() {
   
   document.getElementById("tiePopup").style.display = "none";
   document.getElementById("superOverTiePopup").style.display = "none";
+  document.getElementById("superOverConfirmPopup").style.display = "none";
   
 currentSuperOverAttempt = attemptNo;
 currentSuperOverInnings = 1;
