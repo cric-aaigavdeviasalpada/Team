@@ -2111,7 +2111,10 @@ window.currentScorecardMatches = data.map(score => ({
   ...score.matches
 }));
 
-window.showInningsScorecard = function(matchId, battingSide) {
+window.showInningsScorecard = function(matchId, battingSide, shouldScroll = true) {
+
+  window.selectedScorecardMatchId = matchId;
+  window.selectedScorecardBattingSide = battingSide;
   const container = document.getElementById("battingScorecardContainer");
 
   const match = window.currentScorecardMatches.find(
@@ -2144,9 +2147,22 @@ window.showInningsScorecard = function(matchId, battingSide) {
     </div>
   `;
 
+  if (shouldScroll) {
   container.scrollIntoView({ behavior: "smooth", block: "start" });
+ }
 };
-  
+
+if (
+  window.selectedScorecardMatchId &&
+  window.selectedScorecardBattingSide
+) {
+  window.showInningsScorecard(
+    window.selectedScorecardMatchId,
+    window.selectedScorecardBattingSide,
+    false
+  );
+}
+
 const isAdmin = dashboard && !dashboard.hidden;
   
   const scoreboardHTML = data.map(score => {
@@ -3383,10 +3399,12 @@ const inningsComplete =
 }
   
 async function undoLastBall() {
- if (isSuperOverMode) {
+
+  if (isSuperOverMode) {
     await undoSuperOverBall();
     return;
   }
+
   const matchId = document.getElementById("quickMatchId").value;
   const message = document.getElementById("quickScoreMessage");
 
@@ -3395,13 +3413,11 @@ async function undoLastBall() {
     return;
   }
 
-  const confirmUndo = confirm(
-    "शेवटची Ball Entry Delete करायची आहे का?"
-  );
+  if (!confirm("शेवटची Ball Entry Undo करायची आहे का?")) {
+    return;
+  }
 
-  if (!confirmUndo) return;
-
-  // शेवटची Ball Entry शोधा
+  // शेवटची Ball Entry मिळवा
   const { data: event, error: eventError } = await supabaseClient
     .from("ball_events")
     .select("*")
@@ -3414,7 +3430,7 @@ async function undoLastBall() {
   if (eventError || !event) {
     message.textContent = eventError
       ? "Error: " + eventError.message
-      : "Delete करण्यासाठी कोणतीही Ball Entry नाही.";
+      : "Undo करण्यासाठी Ball Entry नाही.";
     return;
   }
 
@@ -3427,6 +3443,18 @@ async function undoLastBall() {
 
   if (scoreError || !score) {
     message.textContent = "Scoreboard मिळाला नाही.";
+    return;
+  }
+
+  // Match Details मिळवा
+  const { data: match, error: matchError } = await supabaseClient
+    .from("matches")
+    .select("batting_first, status, result")
+    .eq("id", Number(matchId))
+    .maybeSingle();
+
+  if (matchError || !match) {
+    message.textContent = "Match Details मिळाले नाहीत.";
     return;
   }
 
@@ -3451,61 +3479,96 @@ async function undoLastBall() {
   const previousOvers =
     Math.floor(previousBalls / 6) + "." + (previousBalls % 6);
 
+  const previousRuns = Math.max(
+    0,
+    Number(score[runsColumn] || 0) - Number(event.runs || 0)
+  );
+
+  const previousWickets = Math.max(
+    0,
+    Number(score[wicketsColumn] || 0) -
+      (event.is_wicket ? 1 : 0)
+  );
+
+  const totalBalls = Number(score.total_overs || 5) * 6;
+
+  const inningsComplete =
+    previousBalls >= totalBalls || previousWickets >= 10;
+
+  const firstBattingTeam =
+    match.batting_first === "opponent" ? "opponent" : "team";
+
+  const matchWasCompleted =
+    String(match.status || "").toLowerCase() === "completed" ||
+    String(score.status || "").toLowerCase() === "completed" ||
+    Boolean(match.result);
+
   const updates = {
-    [runsColumn]: Math.max(
-      0,
-      Number(score[runsColumn] || 0) - Number(event.runs || 0)
-    ),
-    [wicketsColumn]: Math.max(
-      0,
-      Number(score[wicketsColumn] || 0) -
-        (event.event_type === "wicket" ? 1 : 0)
-    ),
+    [runsColumn]: previousRuns,
+    [wicketsColumn]: previousWickets,
     [oversColumn]: Number(previousOvers),
     updated_at: new Date().toISOString()
   };
 
-  // आधी Ball History मधून Entry Delete करा
-  const { error: deleteError } = await supabaseClient
-    .from("ball_events")
-    .delete()
-    .eq("id", event.id);
-
-  if (deleteError) {
-    message.textContent = "Entry Delete झाली नाही: " + deleteError.message;
-    return;
+  // पहिली Innings Undo झाल्यास Target पुन्हा तपासा
+  if (event.batting_team === firstBattingTeam) {
+    updates.target = inningsComplete ? previousRuns + 1 : 0;
   }
 
-  // Scoreboard मागच्या स्थितीत आणा
+  // Completed Match Undo झाल्यास LIVE करा
+  if (matchWasCompleted) {
+    updates.status = "LIVE";
+  }
+
+  // Scoreboard Update
   const { error: updateError } = await supabaseClient
     .from("scoreboards")
     .update(updates)
     .eq("id", score.id);
 
   if (updateError) {
-    // Scoreboard update अयशस्वी झाल्यास History परत सेव्ह करा
-    await supabaseClient.from("ball_events").insert({
-      match_id: event.match_id,
-      batting_team: event.batting_team,
-      runs: event.runs,
-      event_type: event.event_type,
-      event_label: event.event_label,
-      legal_ball: event.legal_ball,
-      over_number: event.over_number,
-      ball_number: event.ball_number,
-      created_at: event.created_at
-    });
-
     message.textContent = "Score Update Error: " + updateError.message;
     return;
   }
 
-  message.textContent =
-    "↩️ शेवटची Entry (" + event.event_label + ") Delete झाली!";
+  // Ball History Delete
+  const { error: deleteError } = await supabaseClient
+    .from("ball_events")
+    .delete()
+    .eq("id", event.id);
 
+  if (deleteError) {
+    message.textContent =
+      "Ball Delete झाली नाही: " + deleteError.message;
+    return;
+  }
+
+  // Match Result आणि Status पूर्ववत करा
+  if (matchWasCompleted) {
+    const { error: matchUpdateError } = await supabaseClient
+      .from("matches")
+      .update({
+        status: "LIVE",
+        result: null
+      })
+      .eq("id", Number(matchId));
+
+    if (matchUpdateError) {
+      message.textContent =
+        "Score Undo झाला; पण Match Status Update Error: " +
+        matchUpdateError.message;
+      await loadScoreboard();
+      return;
+    }
+  }
+
+  message.textContent =
+    "↩️ शेवटची Ball (" + event.event_label + ") Undo झाली!";
+
+  await loadMatches();
   await loadScoreboard();
 }
-
+  
 async function undoSuperOverBall() {
   const message = document.getElementById("quickScoreMessage");
 
