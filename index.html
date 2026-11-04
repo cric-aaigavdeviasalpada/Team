@@ -615,6 +615,22 @@ footer {
       </select>
     </div>
 
+    <div id="runOutCompletedRunsBox"
+         style="display:none;margin-top:10px">
+
+      <label>Completed Runs</label>
+
+      <input
+        type="number"
+        id="runOutCompletedRuns"
+        min="0"
+        max="10"
+        value="0"
+        placeholder="Enter completed runs"
+        style="width:100%;padding:12px;margin:8px 0">
+
+    </div>
+    
     <button onclick="confirmWicket()"
       style="width:100%;padding:12px;background:#e63946;color:white;border:0;border-radius:8px;margin-top:15px;font-weight:bold">
       Confirm Wicket
@@ -2587,6 +2603,9 @@ function toggleRunOutPlayer() {
 
   document.getElementById("runOutPlayerBox").style.display =
     type === "run_out" ? "block" : "none";
+
+  document.getElementById("runOutCompletedRunsBox").style.display =
+    type === "run_out" ? "block" : "none";
 }
 
 function closeWicketPopup() {
@@ -2604,12 +2623,27 @@ function confirmWicket() {
   let dismissedPlayerId =
     document.getElementById("strikerPlayer").value;
 
+  let completedRuns = 0;
+
   if (type === "run_out") {
     dismissedPlayerId =
       document.getElementById("runOutPlayer").value;
 
+    completedRuns = Number(
+      document.getElementById("runOutCompletedRuns").value
+    );
+
     if (!dismissedPlayerId) {
       alert("Run Out झालेला Batsman निवडा.");
+      return;
+    }
+
+    if (
+      !Number.isInteger(completedRuns) ||
+      completedRuns < 0 ||
+      completedRuns > 10
+    ) {
+      alert("Completed Runs मध्ये 0 ते 10 पर्यंत नंबर टाका.");
       return;
     }
   }
@@ -2622,14 +2656,16 @@ function confirmWicket() {
   quickBallUpdate(
     "W",
     pendingDismissalType,
-    pendingDismissedPlayerId
+    pendingDismissedPlayerId,
+    completedRuns
   );
 }
-
+  
 async function quickBallUpdate(
   runsOrWicket,
   dismissalType = null,
-  dismissedPlayerId = null
+  dismissedPlayerId = null,
+  completedRuns = 0
 ) {
     if (isSuperOverMode) {
     await superOverBall(runsOrWicket, dismissalType, dismissedPlayerId);
@@ -2709,7 +2745,11 @@ async function quickBallUpdate(
 
   const extra = isExtra ? extraTypes[runsOrWicket] : null;
   const isWicket = runsOrWicket === "W";
-  const runs = extra ? extra.runs : (isWicket ? 0 : Number(runsOrWicket));
+  const runs = extra
+  ? extra.runs
+  : (isWicket
+      ? (dismissalType === "run_out" ? Number(completedRuns || 0) : 0)
+      : Number(runsOrWicket));
   const legalBall = extra ? false : true;
   const eventType = extra ? extra.type : (isWicket ? "wicket" : "run");
   const eventLabel = extra ? extra.label : (isWicket ? "W" : String(runs));
@@ -2904,9 +2944,11 @@ const automaticTarget =
   bowler_id: Number(bowlerId),
 
   is_wicket: isWicket,
-  batsman_runs: extra
-    ? (extra.type === "no_ball" ? customRuns : 0)
-    : (isWicket ? 0 : runs),
+ batsman_runs: extra
+  ? (extra.type === "no_ball" ? customRuns : 0)
+  : (isWicket
+      ? (dismissalType === "run_out" ? Number(completedRuns || 0) : 0)
+      : runs),
   extra_runs: extra
     ? (extra.type === "wide" ? runs : 1)
     : 0,
