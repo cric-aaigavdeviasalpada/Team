@@ -2974,7 +2974,7 @@ if (isWicket && dismissalType === "run_out") {
 
   const { data: match, error } = await supabaseClient
     .from("matches")
-    .select("toss_winner")
+    .select("toss_winner, opponent")
     .eq("id", Number(matchId))
     .single();
 
@@ -2983,10 +2983,10 @@ if (isWicket && dismissalType === "run_out") {
     return;
   }
 
- const winner =
-  match.toss_winner === "opponent"
-    ? "Opponent Team"
-    : "Aai Gavdevi Team";
+  const winner =
+    match.toss_winner === "opponent"
+      ? (match.opponent || "Opponent Team").trim()
+      : "Aai Gavdevi Team";
 
   const { error: updateError } = await supabaseClient
     .from("matches")
@@ -3003,12 +3003,12 @@ if (isWicket && dismissalType === "run_out") {
 
   document.getElementById("tiePopup").style.display = "none";
 
-  alert("🏆 Toss Winner हा Match Winner घोषित झाला!");
+  alert("🏆 " + winner + " Match Winner घोषित झाली!");
 
   await loadMatches();
   await loadScoreboard();
 }
-
+  
 function openOtherWinnerPopup() {
   document.getElementById("tiePopup").style.display = "none";
   document.getElementById("superOverTiePopup").style.display = "none";
@@ -3016,6 +3016,7 @@ function openOtherWinnerPopup() {
 
   document.getElementById("otherWinnerPopup").style.display = "flex";
 }
+  
   async function saveOtherWinner() {
   const matchId = document.getElementById("quickMatchId").value;
   const winner = document.getElementById("manualMatchWinner").value;
@@ -3024,11 +3025,22 @@ function openOtherWinnerPopup() {
     alert("कृपया Match Winner निवडा.");
     return;
   }
-    
+
+  const { data: match, error: matchError } = await supabaseClient
+    .from("matches")
+    .select("opponent")
+    .eq("id", Number(matchId))
+    .single();
+
+  if (matchError || !match) {
+    alert("Match Details मिळाले नाहीत.");
+    return;
+  }
+
   isSuperOverMode = false;
-    
+
   const winnerName =
-    winner === "team" ? "Aai Gavdevi Team" : "Opponent Team";
+    winner === "team" ? "Aai Gavdevi Team" : (match.opponent || "Opponent Team").trim();
 
   const { error } = await supabaseClient
     .from("matches")
@@ -3050,7 +3062,7 @@ function openOtherWinnerPopup() {
   await loadMatches();
   await loadScoreboard();
 }
-
+  
 function openSuperOverConfirmPopup() {
   document.getElementById("tiePopup").style.display = "none";
 
