@@ -1773,6 +1773,8 @@ if (containers.length === 0) {
   return;
 }
 
+  await loadPublicSuperOverScore();
+
   const { data, error } = await supabaseClient
     .from("scoreboards")
     .select(`
@@ -2347,6 +2349,77 @@ ${isAdmin ? `
 });
 }
 
+async function loadPublicSuperOverScore() {
+
+  const dashboard = document.getElementById("superOverDashboard");
+  if (!dashboard) return;
+
+  const { data, error } = await supabaseClient
+    .from("super_over_innings")
+    .select("match_id, attempt_no, innings_no, batting_team, runs, wickets, overs, status")
+    .order("attempt_no", { ascending: false })
+    .order("innings_no", { ascending: true });
+
+  if (error) {
+    console.error("Public Super Over Error:", error.message);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    dashboard.style.display = "none";
+    return;
+  }
+
+  const liveInnings = data.find(row => row.status === "LIVE");
+
+  if (!liveInnings) {
+    dashboard.style.display = "none";
+    return;
+  }
+
+  const attemptRows = data.filter(row =>
+    Number(row.match_id) === Number(liveInnings.match_id) &&
+    Number(row.attempt_no) === Number(liveInnings.attempt_no)
+  );
+
+  const firstInnings = attemptRows.find(row =>
+    Number(row.innings_no) === 1
+  );
+
+  const secondInnings = attemptRows.find(row =>
+    Number(row.innings_no) === 2
+  );
+
+  const currentInnings = liveInnings;
+
+  const teamName = currentInnings.batting_team === "team"
+    ? "Aai Gavdevi Team Batting"
+    : "Opponent Team Batting";
+
+  dashboard.style.display = "block";
+
+  document.getElementById("superOverScore").textContent =
+    `${currentInnings.runs}/${currentInnings.wickets}`;
+
+  document.getElementById("superOverOvers").textContent =
+    `Overs: ${currentInnings.overs} / 1`;
+
+  document.getElementById("superOverBattingTeam").textContent =
+    teamName;
+
+  const message = document.getElementById("superOverMessage");
+
+  if (Number(currentInnings.innings_no) === 2 && firstInnings) {
+    const target = Number(firstInnings.runs) + 1;
+    const remaining = Math.max(0, target - Number(currentInnings.runs));
+
+    message.textContent =
+      `🎯 Target: ${target} | ${remaining} धावा बाकी`;
+  } else {
+    message.textContent = "🔥 Super Over LIVE!";
+  }
+}
+  
 async function adminLogout() {
   const { error } = await supabaseClient.auth.signOut();
 
@@ -3101,12 +3174,17 @@ async function startSuperOver() {
   match.batting_first === "our" ? "team" : match.batting_first;
   const secondBatting = firstBatting === "team" ? "opponent" : "team";
 
-  const { data: existing } = await supabaseClient
-    .from("super_over_innings")
-    .select("attempt_no")
-    .eq("match_id", Number(matchId));
+  const { data: existing, error: existingError } = await supabaseClient
+  .from("super_over_innings")
+  .select("attempt_no")
+  .eq("match_id", Number(matchId));
 
-  const attemptNo = existing && existing.length
+if (existingError) {
+  alert("Previous Super Over data मिळाला नाही: " + existingError.message);
+  return;
+}
+
+const attemptNo = existing && existing.length
   ? Math.max(...existing.map(row => Number(row.attempt_no))) + 1
   : 1;
 
