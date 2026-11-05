@@ -1858,6 +1858,7 @@ if (containers.length === 0) {
     .from("scoreboards")
     .select(`
       status,
+      updated_at,
       total_overs,
       match_id,
       team_runs,
@@ -1879,6 +1880,28 @@ if (containers.length === 0) {
     return;
   }
 
+  const now = Date.now();
+
+  const visibleData = (data || [])
+    .filter(score => {
+      if (score.status === "LIVE") return true;
+
+      if (score.status === "Completed") {
+        if (!score.updated_at) return false;
+
+        const completedTime = new Date(score.updated_at).getTime();
+
+        return now - completedTime <= 24 * 60 * 60 * 1000;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.status === "LIVE" && b.status !== "LIVE") return -1;
+      if (b.status === "LIVE" && a.status !== "LIVE") return 1;
+      return 0;
+    });
+  
   if (!data || data.length === 0) {
     containers.forEach(container => {
   container.innerHTML = '<div class="card">सध्या स्कोअर उपलब्ध नाही.</div>';
@@ -1887,7 +1910,7 @@ if (containers.length === 0) {
   }
 
   const dashboard = document.getElementById("adminDashboard");
-  const matchIds = data.map(score => score.match_id);
+  const matchIds = visibleData.map(score => score.match_id);
 
 const { data: ballEvents, error: ballEventsError } = await supabaseClient
   .from("ball_events")
@@ -2219,7 +2242,7 @@ const howOut = dismissalEvent
   `;
 };
 
-window.currentScorecardMatches = data.map(score => ({
+window.currentScorecardMatches = visibleData.map(score => ({
   match_id: score.match_id,
   ...score.matches
 }));
@@ -2278,7 +2301,7 @@ if (
 
 const isAdmin = dashboard && !dashboard.hidden;
   
-  const scoreboardHTML = data.map(score => {
+  const scoreboardHTML = visibleData.map(score => {
     const match = score.matches;
     const opponent = match?.opponent || "Opponent Team";
 const ourBattingFirst = match?.batting_first !== "opponent";
@@ -2427,6 +2450,10 @@ ${isAdmin ? `
   container.innerHTML = scoreboardHTML;
 });
 }
+
+  setInterval(() => {
+  loadScoreboard();
+}, 60000);
   
 async function loadPreviousMatches() {
 
