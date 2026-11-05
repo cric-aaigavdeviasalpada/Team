@@ -281,7 +281,8 @@ footer {
 <a href="#home">Home</a>
 <a href="#team">Team</a>
 <a href="#schedule">Schedule</a>
-<a href="#score">Scoreboard</a>
+<a href="#score">धावफलक</a>
+<a href="#previousMatches">🏆 मागील सामने</a>
 <a href="#gallery">Gallery</a>
 <a href="#updates">Updates</a>
 </nav>
@@ -324,6 +325,52 @@ footer {
 </div>
 </section>
 
+<!-- 🏆 मागील सामने -->
+<section id="previousMatches">
+
+  <h2>🏆 मागील सामने</h2>
+
+  <div class="card">
+
+    <input
+      type="text"
+      id="previousMatchSearch"
+      placeholder="🔍 संघाच्या नावाने सामना शोधा..."
+      style="width:100%;padding:12px;margin-bottom:12px"
+    >
+
+    <label>📅 सुरुवातीची तारीख</label>
+    <input
+      type="date"
+      id="previousMatchStartDate"
+      style="width:100%;padding:12px;margin:8px 0"
+    >
+
+    <label>📅 शेवटची तारीख</label>
+    <input
+      type="date"
+      id="previousMatchEndDate"
+      style="width:100%;padding:12px;margin:8px 0"
+    >
+
+    <button class="btn" onclick="loadPreviousMatches()">
+      सामने शोधा
+    </button>
+
+    <button class="btn" onclick="resetPreviousMatchFilters()">
+      फिल्टर काढा
+    </button>
+
+  </div>
+
+  <div id="previousMatchesContainer">
+    <p>मागील सामने लोड होत आहेत...</p>
+  </div>
+
+  <div id="previousMatchScorecard"></div>
+
+</section>
+  
   <section id="team">
   <h2>👥 आपली टीम | Our Team</h2>
 
@@ -2380,7 +2427,352 @@ ${isAdmin ? `
   container.innerHTML = scoreboardHTML;
 });
 }
+  
+async function loadPreviousMatches() {
 
+  const container = document.getElementById("previousMatchesContainer");
+
+  const search = document.getElementById("previousMatchSearch").value.trim().toLowerCase();
+
+  const startDate = document.getElementById("previousMatchStartDate").value;
+  const endDate = document.getElementById("previousMatchEndDate").value;
+
+  container.innerHTML = "<p>🏏 सामने शोधत आहोत...</p>";
+
+  let query = supabaseClient
+    .from("scoreboards")
+    .select(`
+      match_id,
+      team_runs,
+      wickets,
+      overs,
+      opponent_runs,
+      opponent_wickets,
+      opponent_overs,
+      status,
+      matches!inner (
+        opponent,
+        match_date,
+        result
+      )
+    `)
+    .eq("status", "Completed")
+    .order("match_date", {
+      ascending: false,
+      referencedTable: "matches"
+    });
+
+  if (startDate) {
+    query = query.gte("matches.match_date", startDate + "T00:00:00");
+  }
+
+  if (endDate) {
+    query = query.lte("matches.match_date", endDate + "T23:59:59.999");
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Previous Matches Error:", error);
+    container.innerHTML = "<p>मागील सामने लोड झाले नाहीत.</p>";
+    return;
+  }
+
+  const filteredMatches = (data || []).filter(match => {
+    const opponent = (match.matches?.opponent || "").toLowerCase();
+
+    return opponent.includes(search);
+  });
+
+  if (filteredMatches.length === 0) {
+    container.innerHTML = "<div class='card'>या शोधानुसार सामने सापडले नाहीत.</div>";
+    return;
+  }
+
+  const seasons = {};
+
+filteredMatches.forEach(match => {
+
+  const matchDate = new Date(match.matches.match_date);
+
+  const seasonStartYear =
+    matchDate.getMonth() >= 8
+      ? matchDate.getFullYear()
+      : matchDate.getFullYear() - 1;
+
+  const seasonName =
+    `${seasonStartYear}-${String(seasonStartYear + 1).slice(-2)}`;
+
+  if (!seasons[seasonName]) {
+    seasons[seasonName] = [];
+  }
+
+  seasons[seasonName].push(match);
+});
+
+container.innerHTML = Object.keys(seasons)
+  .sort((a, b) => b.localeCompare(a))
+  .map(season => {
+
+    const matchesHTML = seasons[season].map(match => {
+
+      const date = new Date(match.matches.match_date)
+        .toLocaleDateString("mr-IN");
+
+      const opponent = match.matches.opponent || "प्रतिस्पर्धी संघ";
+
+      return `
+        <div class="card">
+
+          <h3>🏏 आई गावदेवी विरुद्ध ${opponent}</h3>
+
+          <p>📅 ${date}</p>
+
+          <h2 style="text-align:center">
+            ${match.team_runs}/${match.wickets}
+            –
+            ${match.opponent_runs}/${match.opponent_wickets}
+          </h2>
+
+          <p style="text-align:center">
+            🏆 ${match.matches.result || "सामना पूर्ण"}
+          </p>
+
+          <button class="btn"
+            onclick="openPreviousMatchScorecard(${match.match_id})">
+            संपूर्ण धावफलक पाहा →
+          </button>
+
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <h2>🏆 हंगाम ${season.replace("-", "–")}</h2>
+      ${matchesHTML}
+    `;
+
+  }).join("");
+}
+
+function resetPreviousMatchFilters() {
+
+  document.getElementById("previousMatchSearch").value = "";
+
+  document.getElementById("previousMatchStartDate").value = "";
+
+  document.getElementById("previousMatchEndDate").value = "";
+
+  loadPreviousMatches();
+}
+
+  async function openPreviousMatchScorecard(matchId) {
+
+  const container = document.getElementById("previousMatchScorecard");
+
+  container.innerHTML = `
+    <div class="card">
+      <p>🏏 संपूर्ण धावफलक लोड होत आहे...</p>
+    </div>
+  `;
+
+  container.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+
+  const { data: score, error: scoreError } = await supabaseClient
+    .from("scoreboards")
+    .select(`
+      *,
+      matches (
+        opponent,
+        match_date,
+        venue,
+        toss_winner,
+        toss_decision,
+        batting_first,
+        result
+      )
+    `)
+    .eq("match_id", matchId)
+    .single();
+
+  if (scoreError || !score) {
+    console.error(scoreError);
+
+    container.innerHTML = `
+      <div class="card">
+        धावफलक लोड करता आला नाही.
+      </div>
+    `;
+    return;
+  }
+
+  const { data: events, error: eventsError } = await supabaseClient
+    .from("ball_events")
+    .select("*")
+    .eq("match_id", matchId)
+    .order("created_at", { ascending: true });
+
+  const { data: players, error: playersError } = await supabaseClient
+    .from("match_players")
+    .select("*")
+    .eq("match_id", matchId)
+    .order("batting_order", { ascending: true });
+
+  if (eventsError || playersError) {
+    console.error(eventsError || playersError);
+
+    container.innerHTML = `
+      <div class="card">
+        खेळाडूंची किंवा चेंडूंची माहिती लोड झाली नाही.
+      </div>
+    `;
+    return;
+  }
+
+  const opponent = score.matches?.opponent || "प्रतिस्पर्धी संघ";
+
+  const ourFirst = score.matches?.batting_first !== "opponent";
+
+  const firstRuns = ourFirst ? score.team_runs : score.opponent_runs;
+  const firstWickets = ourFirst ? score.wickets : score.opponent_wickets;
+  const firstOvers = ourFirst ? score.overs : score.opponent_overs;
+
+  const secondRuns = ourFirst ? score.opponent_runs : score.team_runs;
+  const secondWickets = ourFirst ? score.opponent_wickets : score.wickets;
+  const secondOvers = ourFirst ? score.opponent_overs : score.overs;
+
+  const firstSide = ourFirst ? "team" : "opponent";
+  const secondSide = ourFirst ? "opponent" : "team";
+
+  const teamName = "आई गावदेवी असलपाडा";
+
+  const battingTable = (side, name) => {
+
+    const sideEvents = (events || []).filter(e =>
+      e.batting_team === side
+    );
+
+    const sidePlayers = (players || []).filter(p =>
+      p.team_side === (side === "team" ? "our" : "opponent")
+    );
+
+    const rows = sidePlayers.map(player => {
+
+      const pe = sideEvents.filter(e =>
+        Number(e.striker_id) === Number(player.id)
+      );
+
+      const runs = pe.reduce((s, e) =>
+        s + Number(e.batsman_runs || 0), 0
+      );
+
+      const balls = pe.filter(e =>
+        e.legal_ball === true || e.extra_type === "no_ball"
+      ).length;
+
+      const fours = pe.filter(e =>
+        Number(e.batsman_runs) === 4
+      ).length;
+
+      const sixes = pe.filter(e =>
+        Number(e.batsman_runs) === 6
+      ).length;
+
+      const dismissal = sideEvents.find(e =>
+        e.is_wicket === true &&
+        Number(e.dismissed_player_id) === Number(player.id)
+      );
+
+      const outText = dismissal
+        ? "बाद"
+        : "नाबाद";
+
+      return `
+        <tr>
+          <td>${player.player_name}</td>
+          <td>${outText}</td>
+          <td>${runs}</td>
+          <td>${balls}</td>
+          <td>${fours}</td>
+          <td>${sixes}</td>
+        </tr>
+      `;
+    }).join("");
+
+    return `
+      <h3>🏏 ${name} – फलंदाजी</h3>
+
+      <div style="overflow-x:auto">
+        <table style="width:100%;min-width:400px;text-align:center;border-collapse:collapse">
+          <thead>
+            <tr style="background:#30343d">
+              <th>खेळाडू</th>
+              <th>बाद</th>
+              <th>धावा</th>
+              <th>चेंडू</th>
+              <th>चौकार</th>
+              <th>षटकार</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  };
+
+  container.innerHTML = `
+    <div class="card">
+
+      <button class="btn"
+        onclick="document.getElementById('previousMatchScorecard').innerHTML=''">
+        ✖ बंद करा
+      </button>
+
+      <h2>🏆 ${teamName} विरुद्ध ${opponent}</h2>
+
+      <p>📅 ${new Date(score.matches.match_date).toLocaleDateString("mr-IN")}</p>
+
+      <p>📍 ${score.matches.venue || ""}</p>
+
+      <h2 style="text-align:center">
+        ${ourFirst ? teamName : opponent}
+      </h2>
+
+      <h1 style="text-align:center">
+        ${firstRuns}/${firstWickets}
+      </h1>
+
+      <p style="text-align:center">षटके: ${firstOvers}</p>
+
+      ${battingTable(firstSide, ourFirst ? teamName : opponent)}
+
+      <hr>
+
+      <h2 style="text-align:center">
+        ${ourFirst ? opponent : teamName}
+      </h2>
+
+      <h1 style="text-align:center">
+        ${secondRuns}/${secondWickets}
+      </h1>
+
+      <p style="text-align:center">षटके: ${secondOvers}</p>
+
+      ${battingTable(secondSide, ourFirst ? opponent : teamName)}
+
+      <hr>
+
+      <h3>🏆 सामन्याचा निकाल</h3>
+
+      <p>${score.matches.result || "निकाल उपलब्ध नाही"}</p>
+
+    </div>
+  `;
+}
+  
 async function loadPublicSuperOverScore() {
 
   const dashboard = document.getElementById("superOverDashboard");
