@@ -1389,12 +1389,12 @@ async function loadQuickPlayers() {
       .filter(id => Number.isFinite(id))
   );
 
-  // बाद झालेले Players वगळा
-  const battingPlayers = (players || []).filter(
-    player =>
-      player.team_side === battingSide &&
-      !dismissedPlayers.has(Number(player.id))
-  );
+// Super Over मध्ये आधी Out झालेले Players सुद्धा उपलब्ध ठेवा
+const battingPlayers = (players || []).filter(
+  player =>
+    player.team_side === battingSide &&
+    (isSuperOverMode || !dismissedPlayers.has(Number(player.id)))
+);
 
   const bowlingPlayers = (players || []).filter(
     player => player.team_side === bowlingSide
@@ -3281,6 +3281,7 @@ const attemptNo = existing && existing.length
     row => row.innings_no === 1
   ).id;
   isSuperOverMode = true;
+ await loadQuickPlayers();
   
   document.getElementById("tiePopup").style.display = "none";
   document.getElementById("superOverTiePopup").style.display = "none";
