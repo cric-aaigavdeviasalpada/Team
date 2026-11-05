@@ -2686,7 +2686,12 @@ function resetPreviousMatchFilters() {
       p.team_side === (side === "team" ? "our" : "opponent")
     );
 
-    const rows = sidePlayers.map(player => {
+    const rows = sidePlayers.filter(player =>
+  sideEvents.some(e =>
+    Number(e.striker_id) === Number(player.id) ||
+    Number(e.non_striker_id) === Number(player.id)
+  )
+).map(player => {
 
       const pe = sideEvents.filter(e =>
         Number(e.striker_id) === Number(player.id)
@@ -2749,7 +2754,85 @@ function resetPreviousMatchFilters() {
       </div>
     `;
   };
+    
+   const bowlingTable = (battingSide, name) => {
 
+    const bowlingSide = battingSide === "team"
+      ? "opponent"
+      : "team";
+
+    const bowlingPlayers = (players || []).filter(p =>
+      p.team_side === (bowlingSide === "team" ? "our" : "opponent")
+    );
+
+    const bowlingEvents = (events || []).filter(e =>
+      e.batting_team === battingSide &&
+      e.bowler_id
+    );
+
+    const rows = bowlingPlayers.filter(player =>
+      bowlingEvents.some(e =>
+        Number(e.bowler_id) === Number(player.id)
+      )
+    ).map(player => {
+
+      const pe = bowlingEvents.filter(e =>
+        Number(e.bowler_id) === Number(player.id)
+      );
+
+      const legalBalls = pe.filter(e =>
+        e.legal_ball === true
+      ).length;
+
+      const overs = Math.floor(legalBalls / 6) +
+        "." + (legalBalls % 6);
+
+      const runs = pe.reduce((sum, e) =>
+        sum + Number(e.runs || 0), 0
+      );
+
+      const wickets = pe.filter(e =>
+        e.is_wicket === true &&
+        !["run_out", "retired_hurt", "obstructing_the_field"].includes(e.dismissal_type)
+      ).length;
+
+      const economy = legalBalls > 0
+        ? (runs / (legalBalls / 6)).toFixed(2)
+        : "0.00";
+
+      return `
+        <tr>
+          <td>${player.player_name}</td>
+          <td>${overs}</td>
+          <td>${runs}</td>
+          <td>${wickets}</td>
+          <td>${economy}</td>
+        </tr>
+      `;
+    }).join("");
+
+    if (!rows) return "";
+
+    return `
+      <h3>🎯 ${name} – गोलंदाजी</h3>
+
+      <div style="overflow-x:auto">
+        <table style="width:100%;min-width:350px;text-align:center;border-collapse:collapse">
+          <thead>
+            <tr style="background:#30343d">
+              <th>गोलंदाज</th>
+              <th>षटके</th>
+              <th>धावा</th>
+              <th>बळी</th>
+              <th>इकॉनॉमी</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  };
+    
   container.innerHTML = `
     <div class="card">
 
@@ -2775,6 +2858,7 @@ function resetPreviousMatchFilters() {
       <p style="text-align:center">षटके: ${firstOvers}</p>
 
       ${battingTable(firstSide, ourFirst ? teamName : opponent)}
+      ${bowlingTable(firstSide, ourFirst ? opponent : teamName)}
 
       <hr>
 
@@ -2789,6 +2873,7 @@ function resetPreviousMatchFilters() {
       <p style="text-align:center">षटके: ${secondOvers}</p>
 
       ${battingTable(secondSide, ourFirst ? opponent : teamName)}
+      ${bowlingTable(secondSide, ourFirst ? teamName : opponent)}
 
       <hr>
 
