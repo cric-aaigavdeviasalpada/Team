@@ -1323,22 +1323,38 @@ function renderOpponentPlayers() {
 
   playingXIOpponentNames.forEach((name, index) => {
     const item = document.createElement("div");
+
+    item.style.display = "flex";
+    item.style.gap = "8px";
+    item.style.alignItems = "center";
     item.style.padding = "6px";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = name;
+    input.placeholder = "Player Name";
+    input.style.flex = "1";
+    input.style.minWidth = "0";
+    input.style.padding = "10px";
+
+    input.oninput = function() {
+      playingXIOpponentNames[index] = input.value;
+    };
 
     const removeButton = document.createElement("button");
     removeButton.type = "button";
     removeButton.textContent = "❌";
+
     removeButton.onclick = function() {
       playingXIOpponentNames.splice(index, 1);
       renderOpponentPlayers();
     };
 
-    item.textContent = (index + 1) + ". " + name + " ";
+    item.appendChild(input);
     item.appendChild(removeButton);
     list.appendChild(item);
   });
 }
-
 async function loadQuickPlayers() {
   const matchId = document.getElementById("quickMatchId").value;
   const battingTeam = document.getElementById("battingTeam").value;
