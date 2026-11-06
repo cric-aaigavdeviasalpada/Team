@@ -1724,8 +1724,9 @@ if (!select && !quickSelect && !playingXISelect && !tossSelect) return;
 
   const { data, error } = await supabaseClient
     .from("matches")
-    .select("id, opponent, match_date")
-    .order("match_date", { ascending: true });
+.select("id, opponent, match_date, status")
+.neq("status", "Completed")
+.order("match_date", { ascending: true });
 
   if (error) {
     console.error("मॅच Dropdown error:", error.message);
