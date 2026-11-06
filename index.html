@@ -2205,8 +2205,9 @@ const howOut = dismissalEvent
     );
 
     const wickets = playerEvents.filter(event =>
-      event.is_wicket === true
-    ).length;
+  event.is_wicket === true &&
+  !["run_out", "retired_hurt", "obstructing_the_field"].includes(event.dismissal_type)
+).length;
 
     const economy = legalBalls > 0
       ? (runs / (legalBalls / 6)).toFixed(2)
