@@ -1662,37 +1662,48 @@ container.innerHTML = data.map(match => `
 `).join("");
 }
 
- 
 async function deleteMatch(matchId) {
 
   const confirmDelete = confirm(
-    "ही मॅच कायमची Delete करायची आहे का?"
+    "ही मॅच आणि तिचे सर्व Scoreboard, Ball Events व Players कायमचे Delete करायचे आहेत का?"
   );
 
   if (!confirmDelete) return;
 
   // Step 1: Delete Ball Events
-
-  const { data: deletedEvents, error: ballError } =
-  await supabaseClient
+  const { error: ballError } = await supabaseClient
     .from("ball_events")
     .delete()
-    .eq("match_id", matchId)
-    .select("id");
+    .eq("match_id", matchId);
 
-if (ballError) {
-  alert("Ball Events Delete Error: " + ballError.message);
-  return;
-}
+  if (ballError) {
+    alert("Ball Events Delete Error: " + ballError.message);
+    return;
+  }
 
-console.log("Deleted Ball Events:", deletedEvents);
+  // Step 2: Delete Match Players
+  const { error: playersError } = await supabaseClient
+    .from("match_players")
+    .delete()
+    .eq("match_id", matchId);
 
-if (!deletedEvents || deletedEvents.length === 0) {
-  alert("Ball Events Delete झाले नाहीत. Admin permission तपासावी लागेल.");
-  return;
-}
+  if (playersError) {
+    alert("Match Players Delete Error: " + playersError.message);
+    return;
+  }
 
-  // Step 2: Delete Match
+  // Step 3: Delete Scoreboard
+  const { error: scoreError } = await supabaseClient
+    .from("scoreboards")
+    .delete()
+    .eq("match_id", matchId);
+
+  if (scoreError) {
+    alert("Scoreboard Delete Error: " + scoreError.message);
+    return;
+  }
+
+  // Step 4: Delete Match
   const { error: matchError } = await supabaseClient
     .from("matches")
     .delete()
@@ -1703,13 +1714,12 @@ if (!deletedEvents || deletedEvents.length === 0) {
     return;
   }
 
-  alert("मॅच यशस्वीरीत्या Delete झाली!");
+  alert("✅ मॅच आणि तिचे सर्व संबंधित रेकॉर्ड Delete झाले!");
 
   await loadMatches();
   await loadScoreboard();
 }
 
- 
 async function loadScoreMatchOptions() {
   const select = document.getElementById("scoreMatchId");
 const quickSelect = document.getElementById("quickMatchId");
