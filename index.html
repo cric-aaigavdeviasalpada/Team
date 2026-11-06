@@ -2453,6 +2453,8 @@ ${isAdmin ? `
 async function loadPreviousMatches() {
 
   const container = document.getElementById("previousMatchesContainer");
+  const dashboard = document.getElementById("adminDashboard");
+  const isAdmin = dashboard && !dashboard.hidden;
 
   const search = document.getElementById("previousMatchSearch").value.trim().toLowerCase();
 
@@ -2565,6 +2567,13 @@ container.innerHTML = Object.keys(seasons)
             संपूर्ण धावफलक पाहा →
           </button>
 
+          ${isAdmin ? `
+          <button class="btn"
+          onclick="deleteCompletedMatch(${match.match_id})">
+         🗑️ Delete Match
+        </button>
+` : ""}
+
         </div>
       `;
     }).join("");
@@ -2577,6 +2586,99 @@ container.innerHTML = Object.keys(seasons)
   }).join("");
 }
 
+async function deleteCompletedMatch(matchId) {
+
+  const dashboard = document.getElementById("adminDashboard");
+
+  if (!dashboard || dashboard.hidden) {
+    alert("फक्त Admin ही मॅच Delete करू शकतो.");
+    return;
+  }
+
+  const confirmDelete = confirm(
+    "ही मॅच आणि तिचा संपूर्ण डेटा कायमचा Delete करायचा आहे का?\n\nही कृती पूर्ववत करता येणार नाही."
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+
+    // 1. Super Over Innings शोधा
+    const { data: innings, error: inningsFetchError } =
+      await supabaseClient
+        .from("super_over_innings")
+        .select("id")
+        .eq("match_id", Number(matchId));
+
+    if (inningsFetchError) throw inningsFetchError;
+
+    // 2. Super Over Ball Events Delete करा
+    const inningsIds = (innings || []).map(item => item.id);
+
+    if (inningsIds.length > 0) {
+
+      const { error } = await supabaseClient
+        .from("super_over_ball_events")
+        .delete()
+        .in("super_over_innings_id", inningsIds);
+
+      if (error) throw error;
+    }
+
+    // 3. Super Over Innings Delete करा
+    const { error: superOverError } = await supabaseClient
+      .from("super_over_innings")
+      .delete()
+      .eq("match_id", Number(matchId));
+
+    if (superOverError) throw superOverError;
+
+    // 4. Ball Events Delete करा
+    const { error: ballError } = await supabaseClient
+      .from("ball_events")
+      .delete()
+      .eq("match_id", Number(matchId));
+
+    if (ballError) throw ballError;
+
+    // 5. Playing XI Delete करा
+    const { error: playersError } = await supabaseClient
+      .from("match_players")
+      .delete()
+      .eq("match_id", Number(matchId));
+
+    if (playersError) throw playersError;
+
+    // 6. Scoreboard Delete करा
+    const { error: scoreError } = await supabaseClient
+      .from("scoreboards")
+      .delete()
+      .eq("match_id", Number(matchId));
+
+    if (scoreError) throw scoreError;
+
+    // 7. शेवटी Match Delete करा
+    const { error: matchError } = await supabaseClient
+      .from("matches")
+      .delete()
+      .eq("id", Number(matchId));
+
+    if (matchError) throw matchError;
+
+    alert("मॅच आणि तिचा संपूर्ण डेटा यशस्वीरीत्या Delete झाला!");
+
+    await loadPreviousMatches();
+    await loadMatches();
+    await loadScoreboard();
+
+  } catch (error) {
+
+    alert("मॅच Delete करताना Error: " + error.message);
+    console.error("Delete Match Error:", error);
+
+  }
+}
+  
 function resetPreviousMatchFilters() {
 
   document.getElementById("previousMatchSearch").value = "";
