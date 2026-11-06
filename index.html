@@ -581,13 +581,6 @@ footer {
 
 <input id="target" type="number" min="0" placeholder="Target (optional)" style="padding:10px;width:90%;margin:5px">
 
-<label for="matchStatus">Match Status:</label>
-<select id="matchStatus" style="padding:10px;width:90%;margin:5px">
-  <option value="Upcoming">Upcoming</option>
-  <option value="LIVE">🔴 LIVE</option>
-  <option value="Completed">Completed</option>
-</select>
-
 <button class="btn" onclick="saveScore()">Save Score</button>
 <p id="scoreMessage"></p>
 
@@ -1769,7 +1762,6 @@ async function saveScore() {
   const opponentOvers = document.getElementById("opponentOvers").value;
 
   const target = document.getElementById("target").value;
-  const status = document.getElementById("matchStatus").value;
   const message = document.getElementById("scoreMessage");
 
   if (
@@ -1808,7 +1800,6 @@ async function saveScore() {
     opponent_wickets: Number(opponentWickets),
     opponent_overs: Number(opponentOvers),
     target: target === "" ? null : Number(target),
-    status: status,
     updated_at: new Date().toISOString()
   };
 
@@ -3295,7 +3286,7 @@ async function quickBallUpdate(
   const { data: matchDetails, error: matchDetailsError } =
   await supabaseClient
     .from("matches")
-    .select("batting_first")
+    .select("batting_first, opponent")
     .eq("id", Number(matchId))
     .maybeSingle();
 
@@ -3589,33 +3580,104 @@ if (isWicket && dismissalType === "run_out") {
   }
 }
   
-     // MATCH TIE CHECK
-  const { data: latestScore } = await supabaseClient
+     // AUTOMATIC MATCH RESULT CHECK
+
+const { data: latestScore, error: latestScoreError } =
+  await supabaseClient
     .from("scoreboards")
-    .select("team_runs, wickets, overs, opponent_runs, opponent_wickets, opponent_overs, total_overs")
+    .select("team_runs, wickets, overs, opponent_runs, opponent_wickets, opponent_overs, total_overs, target")
     .eq("match_id", Number(matchId))
     .maybeSingle();
 
-  if (latestScore) {
-    const teamBalls = parseCricketOvers(latestScore.overs);
-    const opponentBalls = parseCricketOvers(latestScore.opponent_overs);
-    const maxBalls = Number(latestScore.total_overs || 5) * 6;
+if (latestScoreError) {
+  console.error("Latest Score Error:", latestScoreError.message);
+}
 
-    const teamComplete =
-      teamBalls >= maxBalls || Number(latestScore.wickets) >= 10;
+if (latestScore) {
 
-    const opponentComplete =
-      opponentBalls >= maxBalls || Number(latestScore.opponent_wickets) >= 10;
+  const teamRuns = Number(latestScore.team_runs || 0);
+  const opponentRuns = Number(latestScore.opponent_runs || 0);
 
-    const bothEqual =
-      Number(latestScore.team_runs) === Number(latestScore.opponent_runs);
+  const teamBalls = parseCricketOvers(latestScore.overs);
+  const opponentBalls = parseCricketOvers(latestScore.opponent_overs);
+  const maxBalls = Number(latestScore.total_overs || 5) * 6;
 
-    if (teamComplete && opponentComplete && bothEqual) {
-      document.getElementById("tiePopup").style.display = "flex";
+  const teamComplete =
+    teamBalls >= maxBalls || Number(latestScore.wickets) >= 10;
+
+  const opponentComplete =
+    opponentBalls >= maxBalls || Number(latestScore.opponent_wickets) >= 10;
+
+  const firstInningsComplete =
+    firstBattingTeam === "team"
+      ? teamComplete
+      : opponentComplete;
+
+  const chasingTeam =
+    firstBattingTeam === "team"
+      ? "opponent"
+      : "team";
+
+  const chasingRuns =
+    chasingTeam === "team" ? teamRuns : opponentRuns;
+
+  const chaseWon =
+    Number(latestScore.target || 0) > 0 &&
+    chasingRuns >= Number(latestScore.target);
+
+  const secondInningsComplete =
+    chasingTeam === "team"
+      ? teamComplete
+      : opponentComplete;
+
+  const bothEqual = teamRuns === opponentRuns;
+
+  // MATCH TIE
+  if (
+    firstInningsComplete &&
+    (secondInningsComplete || chaseWon) &&
+    bothEqual
+  ) {
+    document.getElementById("tiePopup").style.display = "flex";
+  }
+
+  // AUTOMATIC WINNER
+  else if (
+    firstInningsComplete &&
+    (secondInningsComplete || chaseWon) &&
+    !bothEqual
+  ) {
+
+    const winner =
+      teamRuns > opponentRuns
+        ? "Aai Gavdevi Team"
+        : (matchDetails.opponent || "Opponent Team").trim();
+
+    const result =
+      winner + " विजयी! (" +
+      teamRuns + "/" + latestScore.wickets +
+      " - " +
+      opponentRuns + "/" + latestScore.opponent_wickets +
+      ")";
+
+    const { error: resultError } = await supabaseClient
+      .from("matches")
+      .update({
+        status: "Completed",
+        result: result
+      })
+      .eq("id", Number(matchId));
+
+    if (resultError) {
+      console.error("Match Result Error:", resultError.message);
+    } else {
+      alert("🏆 " + winner + " Match Winner घोषित!");
+      await loadMatches();
+      await loadScoreboard();
     }
   }
- }
-
+}
+  
   async function resolveTieByTossWinner() {
   const matchId = document.getElementById("quickMatchId").value;
 
