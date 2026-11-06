@@ -1539,6 +1539,7 @@ async function savePlayingXI() {
 
   message.textContent = "✅ Playing XI यशस्वीरीत्या सेव्ह झाली!";
 }
+  
 async function saveTossDetails() {
   const matchId = document.getElementById("tossMatchId").value;
   const tossWinner = document.getElementById("tossWinner").value;
@@ -1823,6 +1824,15 @@ async function saveScore() {
   }
 
   message.textContent = "दोन्ही टीमचे स्कोअर यशस्वीपणे सेव्ह झाले!";
+  const { error: statusError } = await supabaseClient
+  .from("matches")
+  .update({ status: "LIVE" })
+  .eq("id", Number(matchId));
+
+if (statusError) {
+  message.textContent = "Score सेव्ह झाला, पण Match LIVE करता आली नाही: " + statusError.message;
+  return;
+}
 
   if (typeof loadScoreboard === "function") {
     await loadScoreboard();
@@ -3926,8 +3936,9 @@ const attemptNo = existing && existing.length
   const { error: tieUpdateError } = await supabaseClient
     .from("matches")
     .update({
-      result: "Match Tied"
-    })
+  status: "LIVE",
+  result: "Match Tied"
+})
     .eq("id", Number(matchId));
 
   if (tieUpdateError) {
