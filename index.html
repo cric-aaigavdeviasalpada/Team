@@ -1569,7 +1569,8 @@ async function saveTossDetails() {
     .update({
       toss_winner: tossWinner,
       toss_decision: tossDecision,
-      batting_first: battingFirst
+      batting_first: battingFirst,
+      status: "LIVE"
     })
     .eq("id", Number(matchId));
 
@@ -1598,11 +1599,12 @@ async function saveMatch() {
 
   const { error } = await supabaseClient
     .from("matches")
-    .insert([{
-      opponent: opponent,
-      match_date: new Date(matchDate).toISOString(),
-      venue: venue
-    }]);
+      .insert([{
+    opponent: opponent,
+    match_date: new Date(matchDate).toISOString(),
+    venue: venue,
+    status: "Upcoming"
+  }]);
 
   if (error) {
     console.error(error);
