@@ -3009,16 +3009,10 @@ async function quickUpdateScore() {
     }
   }
 
-  const statusInput = document.getElementById("quickMatchStatus");
-
-  if (statusInput && statusInput.value !== "") {
-    updates.status = statusInput.value;
-  }
-
-  if (changedCount === 0 && !updates.status) {
-    message.textContent = "किमान एक आकडा किंवा Status बदला.";
-    return;
-  }
+  if (changedCount === 0) {
+  message.textContent = "कृपया किमान एक स्कोअर आकडा बदला.";
+  return;
+}
 
   updates.updated_at = new Date().toISOString();
   message.textContent = "स्कोअर अपडेट होत आहे...";
