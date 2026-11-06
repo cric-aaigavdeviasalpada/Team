@@ -1872,7 +1872,7 @@ if (containers.length === 0) {
       opponent_wickets,
       opponent_overs,
       target,
-      matches(opponent, match_date, venue, toss_winner, toss_decision, batting_first, result)
+      matches(opponent, match_date, venue, toss_winner, toss_decision, batting_first, result, status)
     `)
     .order("updated_at", { ascending: false });
 
@@ -1887,19 +1887,21 @@ if (containers.length === 0) {
   const now = Date.now();
 
   const visibleData = (data || [])
-    .filter(score => {
-      if (score.status === "LIVE") return true;
+.filter(score => {
+  const matchStatus = score.matches?.status;
 
-      if (score.status === "Completed") {
-        if (!score.updated_at) return false;
+  if (matchStatus === "LIVE") return true;
 
-        const completedTime = new Date(score.updated_at).getTime();
+  if (matchStatus === "Completed") {
+    if (!score.updated_at) return false;
 
-        return now - completedTime <= 24 * 60 * 60 * 1000;
-      }
+    const completedTime = new Date(score.updated_at).getTime();
 
-      return true;
-    })
+    return now - completedTime <= 24 * 60 * 60 * 1000;
+  }
+
+  return true;
+})
     .sort((a, b) => {
       if (a.status === "LIVE" && b.status !== "LIVE") return -1;
       if (b.status === "LIVE" && a.status !== "LIVE") return 1;
@@ -2371,9 +2373,9 @@ const secondTeamSide = ourBattingFirst ? "opponent" : "our";
         <h3>🏏 Aai Gavdevi Asalpada vs ${opponent}</h3>
         <p>
   ${
-    score.status === "LIVE"
+    match?.status === "LIVE"
       ? "🔴 LIVE"
-      : score.status === "Completed"
+      : match?.status === "Completed"
       ? "✅ COMPLETED"
       : "🕒 UPCOMING"
   }
@@ -2382,8 +2384,8 @@ const secondTeamSide = ourBattingFirst ? "opponent" : "our";
   <span>📅 ${date}</span>
   <span>📍 ${match?.venue || ""}</span>
   <span>
-    ${score.status === "LIVE" ? "🔴 LIVE" :
-      score.status === "Completed" ? "✅ COMPLETED" : "🕒 UPCOMING"}
+    ${match?.status === "LIVE" ? "🔴 LIVE" :
+  match?.status === "Completed" ? "✅ COMPLETED" : "🕒 UPCOMING"}
   </span>
 </div>
 ${match?.toss_winner ? `
