@@ -883,11 +883,29 @@ footer {
   .main-nav a:hover .nav-emblem { transform: translateY(-2px); box-shadow: inset 0 0 12px rgba(244,196,94,.2), 0 0 16px rgba(36,205,255,.24), 0 0 18px rgba(244,196,94,.2); }
 }
 
+  .team-logo {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 12px;
+  filter: drop-shadow(0 5px 12px rgba(244,196,94,0.3));
+}
+
+@media (max-width: 600px) {
+  .team-logo {
+    width: 125px;
+    height: 125px;
+  }
+}
+  
 </style>
 </head>
 <body>
 <header>
-<div style="font-size:40px">🏏</div>
+<img src="team-logo.png"
+     alt="आई गावदेवी आसलपाडा लोगो"
+     class="team-logo">
 <h1>आई गावदेवी आसलपाडा</h1>
 <p>• आपली टीम, आपला अभिमान!</p>
 </header>
